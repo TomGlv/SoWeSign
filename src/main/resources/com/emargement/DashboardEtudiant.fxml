@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="TOP_CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.emargement.controller.DashboardEtudiantController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+    <Label text="Tableau de Bord Étudiant" textFill="#880E4F">
+        <font>
+            <Font name="System Bold" size="24.0" />
+        </font>
+    </Label>
+
+    <Label fx:id="welcomeLabel" style="-fx-font-size: 16px; -fx-text-fill: #00BCD4;" />
+
+    <VBox spacing="10.0" alignment="CENTER" style="-fx-border-color: #00BCD4; -fx-padding: 15px; -fx-border-radius: 5px;">
+        <Label text="Émargement Rapide par Code" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+        <HBox spacing="10.0" alignment="CENTER">
+            <TextField fx:id="codeInputField" promptText="Entrez le code ici..." prefWidth="200" />
+            <Button text="Valider Présence" onAction="#handleEmarger" style="-fx-background-color: #00BCD4; -fx-text-fill: white;" />
+        </HBox>
+        <Label fx:id="messageLabel" style="-fx-text-fill: gray;" />
+    </VBox>
+
+    <VBox spacing="10.0" alignment="TOP_LEFT" prefHeight="200" prefWidth="400">
+        <Label text="Mon Emploi du Temps (Aujourd'hui)" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+        <Label text="[Affichage de l'emploi du temps à implémenter]" style="-fx-text-fill: gray;" />
+    </VBox>
+
+    <Button text="Déconnexion" onAction="#handleLogout" style="-fx-background-color: #F44336; -fx-text-fill: white;" />
+</VBox>
