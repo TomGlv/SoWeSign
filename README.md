@@ -36,5 +36,5 @@ L'objectif principal du système est de permettre aux professeurs de générer d
 ### 2. Cloner et Importer le Projet
 
 ```bash
-git clone [https://www.wordreference.com/fren/d%C3%A9p%C3%B4t](https://www.wordreference.com/fren/d%C3%A9p%C3%B4t)
+git clone https://github.com/TomGlv/SoWeSign.git
 cd SoWeSign
