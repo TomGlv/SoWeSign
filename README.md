@@ -38,3 +38,4 @@ L'objectif principal du système est de permettre aux professeurs de générer d
 ```bash
 git clone https://github.com/TomGlv/SoWeSign.git
 cd SoWeSign
+mvn clean javafx:run
