@@ -11,7 +11,12 @@ public class SeanceDAO {
 
     public List<Seance> findByCoursId(int coursId) {
         List<Seance> seanceList = new ArrayList<>();
-        String sql = "SELECT s.*, c.nomCours FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.coursId = ?";
+        // ⭐️ CORRECTION : Utilisation de CONCAT pour combiner la date et l'heure en un DATETIME complet.
+        // On sélectionne également explicitement codeEmargementExpire (le nouveau nom de colonne).
+        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
+                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
+                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
+                "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.coursId = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -29,7 +34,11 @@ public class SeanceDAO {
     }
 
     public Optional<Seance> findByCodeEmargement(String code) {
-        String sql = "SELECT s.*, c.nomCours FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.codeEmargement = ?";
+        // ⭐️ CORRECTION : Utilisation de CONCAT pour la création des colonnes dateDebut/dateFin.
+        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
+                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
+                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
+                "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.codeEmargement = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -47,6 +56,7 @@ public class SeanceDAO {
     }
 
     public void updateCodeEmargement(int seanceId, String code, LocalDateTime expiration) throws SQLException {
+        // ⭐️ CORRECTION : La colonne est maintenant 'codeEmargementExpire' (suite à la mise à jour DB).
         String sql = "UPDATE seance SET codeEmargement = ?, codeEmargementExpire = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -64,17 +74,29 @@ public class SeanceDAO {
         Seance seance = new Seance();
         seance.setId(rs.getInt("id"));
         seance.setCoursId(rs.getInt("coursId"));
-        seance.setDateDebut(rs.getTimestamp("dateDebut").toLocalDateTime());
-        seance.setDateFin(rs.getTimestamp("dateFin").toLocalDateTime());
+
+        // ⭐️ CORRECTION : Utilisation des alias 'dateDebut' et 'dateFin' créés dans la requête SQL.
+        Timestamp debutTimestamp = rs.getTimestamp("dateDebut");
+        if (debutTimestamp != null) {
+            seance.setDateDebut(debutTimestamp.toLocalDateTime());
+        }
+
+        Timestamp finTimestamp = rs.getTimestamp("dateFin");
+        if (finTimestamp != null) {
+            seance.setDateFin(finTimestamp.toLocalDateTime());
+        }
+
         seance.setCodeEmargement(rs.getString("codeEmargement"));
 
+        // ⭐️ CORRECTION : Utilisation du nom de colonne correct.
         Timestamp expireTimestamp = rs.getTimestamp("codeEmargementExpire");
         seance.setCodeEmargementExpire(expireTimestamp != null ? expireTimestamp.toLocalDateTime() : null);
 
         try {
             seance.setNomCours(rs.getString("nomCours"));
-        } catch (SQLException ignored) {}
-
+        } catch (SQLException ignore) {
+            // nomCours n'est pas toujours dans le ResultSet
+        }
         return seance;
     }
 }

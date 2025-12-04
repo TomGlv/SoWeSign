@@ -21,6 +21,10 @@ public class Etudiant {
     public int getUtilisateurId() { return utilisateurId; }
     public Utilisateur getUtilisateur() { return utilisateur; }
 
+    // ⭐️ Méthodes pour TableView (utiles pour le DashboardProfesseur)
+    public String getNomComplet() { return utilisateur != null ? utilisateur.getPrenom() + " " + utilisateur.getNom() : ""; }
+    public String getLogin() { return utilisateur != null ? utilisateur.getLogin() : ""; }
+
     // Setters
     public void setId(int id) { this.id = id; }
     public void setNumeroEtudiant(String numeroEtudiant) { this.numeroEtudiant = numeroEtudiant; }

@@ -4,6 +4,7 @@ package com.emargement.service;
 
 import com.emargement.dao.UtilisateurDAO;
 import com.emargement.model.Utilisateur;
+// ⭐️ Import des classes Spring Security pour BCrypt (Assurez-vous d'avoir la dépendance)
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 

@@ -3,7 +3,7 @@ package com.emargement.controller;
 import com.emargement.App;
 import com.emargement.model.Utilisateur;
 import com.emargement.service.AuthService;
-import com.emargement.session.UserSession; // Import pour la gestion de session
+import com.emargement.session.UserSession; // ⭐️ Import pour la gestion de session
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -40,7 +40,6 @@ public class LoginController {
             Utilisateur user = userOpt.get();
 
             // 2. ENREGISTREMENT DE LA SESSION
-            // Stocke l'utilisateur dans la session pour y accéder depuis les dashboards
             UserSession.getInstance().setUtilisateur(user);
 
             try {

@@ -37,6 +37,7 @@ public class DashboardEtudiantController {
             return;
         }
 
+        // ⭐️ Utilisation du service d'émargement
         boolean success = emargementService.emarger(code, utilisateur);
 
         if (success) {
@@ -44,7 +45,7 @@ public class DashboardEtudiantController {
             messageLabel.setStyle("-fx-text-fill: green;");
             codeInputField.clear();
         } else {
-            messageLabel.setText("Échec : Code invalide ou expiré.");
+            messageLabel.setText("Échec : Code invalide, expiré ou vous avez déjà émargé.");
             messageLabel.setStyle("-fx-text-fill: red;");
         }
     }

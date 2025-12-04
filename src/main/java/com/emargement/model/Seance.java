@@ -1,6 +1,7 @@
 package com.emargement.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Seance {
     private int id;
@@ -30,4 +31,22 @@ public class Seance {
     public void setCodeEmargement(String codeEmargement) { this.codeEmargement = codeEmargement; }
     public void setCodeEmargementExpire(LocalDateTime codeEmargementExpire) { this.codeEmargementExpire = codeEmargementExpire; }
     public void setNomCours(String nomCours) { this.nomCours = nomCours; }
+
+    /**
+     * ⭐️ CORRECTION : Redéfinit toString() pour un affichage lisible dans la ListView.
+     * Ex: "Séance du cours 'Java Avancé' - 04/12/2025 à 14:00"
+     */
+    @Override
+    public String toString() {
+        if (dateDebut == null) return "Séance non datée";
+
+        // Utilise un formateur pour une date et heure complète et lisible
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
+        String formattedDate = dateDebut.format(formatter);
+
+        // Assurez-vous d'avoir le nom du cours
+        String coursName = (nomCours != null) ? nomCours : "Cours Inconnu";
+
+        return "Séance du cours '" + coursName + "' - " + formattedDate;
+    }
 }

@@ -43,10 +43,19 @@ public class EtudiantDAO {
         return Optional.ofNullable(etudiant);
     }
 
-    // Simule la récupération de la liste des étudiants (car la table d'inscription manque)
+    /**
+     * ⭐️ AMÉLIORATION : Récupère la liste des étudiants avec les données utilisateur complètes.
+     * Cette méthode doit être révisée lorsque la table `inscription` sera ajoutée.
+     * Pour l'instant, elle retourne tous les étudiants de manière rudimentaire,
+     * car la table de jointure entre Cours et Etudiant (Inscription) est manquante.
+     */
     public List<Etudiant> findByCoursId(int coursId) {
         List<Etudiant> etudiants = new ArrayList<>();
-        String sql = "SELECT e.id, e.numeroEtudiant, u.id as u_id, u.login, u.nom, u.prenom, u.role, u.motDePasseHashed FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id";
+        // ⚠️ REMARQUE : La requête ci-dessous ne filtre pas réellement par coursId
+        // car la table de jointure n'existe pas dans le schéma actuel.
+        // Elle retourne tous les étudiants pour permettre l'affichage initial.
+        String sql = "SELECT e.id, e.numeroEtudiant, u.id as u_id, u.login, u.nom, u.prenom, u.role, u.motDePasseHashed "
+                + "FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -54,6 +63,7 @@ public class EtudiantDAO {
 
             while (rs.next()) {
                 Etudiant etudiant = new Etudiant();
+                // ⭐️ CORRECTION : Utilisation de l'alias 'e.id' pour éviter les conflits
                 etudiant.setId(rs.getInt("e.id"));
                 etudiant.setNumeroEtudiant(rs.getString("numeroEtudiant"));
                 etudiant.setUtilisateurId(rs.getInt("u_id"));
@@ -70,7 +80,7 @@ public class EtudiantDAO {
                 etudiants.add(etudiant);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur SQL dans EtudiantDAO.findAll : " + e.getMessage());
+            System.err.println("Erreur SQL dans EtudiantDAO.findByCoursId : " + e.getMessage());
         }
         return etudiants;
     }

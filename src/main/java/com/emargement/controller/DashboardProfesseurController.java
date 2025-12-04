@@ -4,7 +4,9 @@ import com.emargement.App;
 import com.emargement.model.Cours;
 import com.emargement.model.Etudiant;
 import com.emargement.model.Seance;
+import com.emargement.model.Utilisateur;
 import com.emargement.dao.CoursDAO;
+import com.emargement.dao.EtudiantDAO; // Import manquant ajouté
 import com.emargement.dao.SeanceDAO;
 import com.emargement.service.EmargementService;
 import com.emargement.session.UserSession;
@@ -14,9 +16,13 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.beans.property.SimpleStringProperty; // Import nécessaire
+import javafx.util.Callback;
 
 import java.io.IOException;
-import java.util.Optional; // L'import manquant est ici !
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 public class DashboardProfesseurController {
 
@@ -30,85 +36,100 @@ public class DashboardProfesseurController {
 
     private final CoursDAO coursDAO = new CoursDAO();
     private final SeanceDAO seanceDAO = new SeanceDAO();
+    private final EtudiantDAO etudiantDAO = new EtudiantDAO(); // Instanciation du DAO Etudiant
     private final EmargementService emargementService = new EmargementService();
+
+    private Cours selectedCours = null; // Ajout pour suivre le cours sélectionné
     private Seance selectedSeance = null;
 
-    private ObservableList<Etudiant> etudiants = FXCollections.observableArrayList();
-
-
+    // Méthode appelée automatiquement après le chargement du FXML
     @FXML
     public void initialize() {
-        // Assurez-vous que l'utilisateur est bien connecté
-        if (UserSession.getInstance().getUtilisateur() == null) {
-            handleLogout(); // Redirige si la session est invalide
-            return;
-        }
+        Utilisateur professeur = UserSession.getInstance().getUtilisateur();
+        welcomeLabel.setText("Bienvenue, Professeur " + professeur.getPrenom() + " " + professeur.getNom() + " !");
 
-        int professeurId = UserSession.getInstance().getUtilisateur().getId();
-        String nom = UserSession.getInstance().getUtilisateur().getPrenom() + " " + UserSession.getInstance().getUtilisateur().getNom();
-        welcomeLabel.setText("Bienvenue, Professeur " + nom + " !");
-
-        // Configuration des colonnes de la TableView
-        colNom.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().getUtilisateur().getNom() + " " + cellData.getValue().getUtilisateur().getPrenom()
-                )
-        );
+        // Configuration des colonnes
+        // ⭐️ CORRECTION/AJUSTEMENT : Utilisation de getUtilisateur().getNom() et getPrenom() pour afficher le nom complet
+        colNom.setCellValueFactory(cellData -> {
+            Utilisateur user = cellData.getValue().getUtilisateur();
+            if (user != null) {
+                return new SimpleStringProperty(user.getNom() + " " + user.getPrenom());
+            }
+            return new SimpleStringProperty("");
+        });
         colNumero.setCellValueFactory(new PropertyValueFactory<>("numeroEtudiant"));
-        etudiantTableView.setItems(etudiants);
 
-        // Charger les cours et configurer les écouteurs de sélection
-        loadProfessorsCourses(professeurId);
-
-        coursListView.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldCours, newCours) -> { if (newCours != null) loadSeances(newCours.getId()); });
-
-        seanceListView.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldSeance, newSeance) -> {
-                    selectedSeance = newSeance;
-                    if (newSeance != null) {
-                        // Les messages d'affichage doivent être implémentés pour Seance
-                        loadEtudiantsForSeance(newSeance.getId());
-                        codeLabel.setText("Code : " + (newSeance.getCodeEmargement() != null ? newSeance.getCodeEmargement() : "-----"));
-                    }
-                }
-        );
-    }
-
-    private void loadProfessorsCourses(int professeurId) {
-        ObservableList<Cours> coursList = FXCollections.observableArrayList(coursDAO.findByProfesseurId(professeurId));
-        coursListView.setItems(coursList);
-        // Affichage personnalisé dans la ListView pour Cours
-        coursListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Cours cours, boolean empty) {
-                super.updateItem(cours, empty);
-                setText(empty ? null : cours.getNomCours() + " (" + cours.getCode() + ")");
+        // 1. Gérer la SELECTION DANS LA LISTE DES COURS
+        coursListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            selectedCours = newValue;
+            if (newValue != null) {
+                loadSeances(newValue.getId());
+                // Réinitialiser les vues de la séance précédente
+                seanceListView.getSelectionModel().clearSelection(); // Efface la sélection de séance
+                etudiantTableView.getItems().clear();
+                codeLabel.setText("Code : N/A");
+                selectedSeance = null;
+            } else {
+                seanceListView.getItems().clear();
             }
         });
+
+        // 2. Gérer la SELECTION DANS LA LISTE DES SÉANCES
+        seanceListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            selectedSeance = newValue;
+            if (newValue != null) {
+                // Afficher le code existant de la séance ou N/A
+                String code = (newValue.getCodeEmargement() != null && newValue.getCodeEmargementExpire() != null && newValue.getCodeEmargementExpire().isAfter(LocalDateTime.now()))
+                        ? newValue.getCodeEmargement()
+                        : "N/A";
+                codeLabel.setText("Code : " + code);
+
+                // Charger les étudiants pour la séance sélectionnée
+                loadEtudiantsBySeance(newValue.getCoursId()); // On charge les étudiants par l'ID du cours de la séance
+            } else {
+                // Si la sélection est effacée
+                etudiantTableView.getItems().clear();
+                codeLabel.setText("Code : N/A");
+            }
+        });
+
+        // 3. Charger les cours de l'enseignant au démarrage
+        loadCours(professeur.getId());
     }
 
+    /**
+     * Charge les cours de l'enseignant.
+     */
+    private void loadCours(int professeurId) {
+        List<Cours> coursList = coursDAO.findByProfesseurId(professeurId);
+        ObservableList<Cours> cours = FXCollections.observableArrayList(coursList);
+        coursListView.setItems(cours);
+    }
+
+    /**
+     * Charge les séances associées au cours sélectionné.
+     */
     private void loadSeances(int coursId) {
         ObservableList<Seance> seances = FXCollections.observableArrayList(seanceDAO.findByCoursId(coursId));
         seanceListView.setItems(seances);
-        // Affichage personnalisé dans la ListView pour Seance
-        seanceListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Seance seance, boolean empty) {
-                super.updateItem(seance, empty);
-                // Utilise la date et le nom du cours (s'il est disponible dans l'objet)
-                setText(empty ? null : (seance.getDateDebut() != null ? seance.getDateDebut().toLocalTime() : "Date inconnue") +
-                        " - " + seance.getNomCours());
-            }
-        });
     }
 
-    private void loadEtudiantsForSeance(int seanceId) {
-        etudiants.clear();
-        etudiants.addAll(emargementService.getEtudiantsBySeance(seanceId));
-        etudiantTableView.refresh();
+    /**
+     * Charge la liste des étudiants pour le cours associé à la séance.
+     */
+    private void loadEtudiantsBySeance(int coursId) {
+        // ⚠️ NOTE : Votre EtudiantDAO.findByCoursId actuel semble retourner TOUS les étudiants.
+        // Cela devrait être corrigé dans EtudiantDAO pour joindre la table d'inscription (si elle existe).
+        // En attendant, on utilise la méthode disponible.
+        List<Etudiant> etudiantsList = etudiantDAO.findByCoursId(coursId);
+
+        // TODO: Une fois la table 'Emargement' remplie, ajuster ici pour afficher l'état de présence.
+
+        ObservableList<Etudiant> etudiants = FXCollections.observableArrayList(etudiantsList);
+        etudiantTableView.setItems(etudiants);
     }
 
+    // --- Gestion des Actions de Boutons ---
 
     @FXML
     private void handleGenerateCode() {
@@ -120,7 +141,18 @@ public class DashboardProfesseurController {
         Optional<String> codeOpt = emargementService.generateUniqueCode(selectedSeance.getId());
 
         if (codeOpt.isPresent()) {
+            // Mettre à jour l'objet seance local et le Label
+            selectedSeance.setCodeEmargement(codeOpt.get());
+            selectedSeance.setCodeEmargementExpire(LocalDateTime.now().plusMinutes(EmargementService.VALIDITE_MINUTES));
             codeLabel.setText("Code : " + codeOpt.get());
+
+            // Recharger les séances pour mettre à jour la liste visuellement
+            if (selectedCours != null) {
+                loadSeances(selectedCours.getId());
+                // Resélectionner la séance pour la garder visible
+                seanceListView.getSelectionModel().select(selectedSeance);
+            }
+
             showAlert("Succès", "Code généré : " + codeOpt.get() + ". Valide pendant " + EmargementService.VALIDITE_MINUTES + " minutes.");
         } else {
             showAlert("Erreur", "Échec de la génération du code.");

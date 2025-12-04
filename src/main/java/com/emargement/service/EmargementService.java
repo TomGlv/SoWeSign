@@ -1,5 +1,6 @@
 package com.emargement.service;
 
+import com.emargement.dao.EmargementDAO;
 import com.emargement.dao.EtudiantDAO;
 import com.emargement.dao.SeanceDAO;
 import com.emargement.model.Seance;
@@ -16,10 +17,14 @@ public class EmargementService {
 
     private final SeanceDAO seanceDAO = new SeanceDAO();
     private final EtudiantDAO etudiantDAO = new EtudiantDAO();
+    private final EmargementDAO emargementDAO = new EmargementDAO(); // ⭐️ Ajout du DAO
 
     // Durée de validité du code (10 minutes)
     public static final long VALIDITE_MINUTES = 10;
 
+    /**
+     * Génère un code unique de 6 caractères et l'enregistre pour la séance.
+     */
     public Optional<String> generateUniqueCode(int seanceId) {
         SecureRandom random = new SecureRandom();
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -44,28 +49,45 @@ public class EmargementService {
 
     /**
      * Tente d'émarger un étudiant avec un code unique.
+     * Gère la vérification du code et de l'expiration.
      */
     public boolean emarger(String code, Utilisateur utilisateur) {
-        Optional<Seance> seanceOpt = seanceDAO.findByCodeEmargement(code);
+        try {
+            Optional<Seance> seanceOpt = seanceDAO.findByCodeEmargement(code);
 
-        if (seanceOpt.isEmpty()) return false;
-        Seance seance = seanceOpt.get();
+            if (seanceOpt.isEmpty()) {
+                System.out.println("DEBUG SERVICE: Code non trouvé.");
+                return false;
+            }
 
-        // Vérification de l'expiration
-        if (seance.getCodeEmargementExpire() == null || seance.getCodeEmargementExpire().isBefore(LocalDateTime.now())) {
+            Seance seance = seanceOpt.get();
+
+            // Vérification de l'expiration
+            if (seance.getCodeEmargementExpire() == null || seance.getCodeEmargementExpire().isBefore(LocalDateTime.now())) {
+                System.out.println("DEBUG SERVICE: Code expiré.");
+                return false;
+            }
+
+            Optional<Etudiant> etudiantOpt = etudiantDAO.findByUtilisateurId(utilisateur.getId());
+            if (etudiantOpt.isEmpty()) {
+                System.out.println("DEBUG SERVICE: Utilisateur non trouvé comme étudiant.");
+                return false;
+            }
+            Etudiant etudiant = etudiantOpt.get();
+
+            // ⭐️ Enregistrer l'émargement dans la table 'emargement'
+            boolean success = emargementDAO.createEmargement(seance.getId(), etudiant.getId());
+            if (success) {
+                System.out.println("DEBUG SERVICE: Émargement réussi pour l'étudiant " + utilisateur.getLogin());
+            } else {
+                System.out.println("DEBUG SERVICE: Échec de l'émargement (probablement déjà enregistré).");
+            }
+            return success;
+        } catch (SQLException e) {
+            System.err.println("Erreur SQL lors de l'émargement : " + e.getMessage());
             return false;
         }
-
-        Optional<Etudiant> etudiantOpt = etudiantDAO.findByUtilisateurId(utilisateur.getId());
-        if (etudiantOpt.isEmpty()) return false;
-
-        // TODO: Enregistrer l'émargement dans la table 'emargement' (DAO manquant)
-        System.out.println("Émargement réussi pour l'étudiant " + utilisateur.getLogin());
-        return true;
     }
 
-    public List<Etudiant> getEtudiantsBySeance(int seanceId) {
-        // Simule la récupération des étudiants inscrits au cours de la séance
-        return etudiantDAO.findByCoursId(0);
-    }
+    // TODO: Ajouter une méthode pour récupérer les étudiants et leur statut de présence pour une séance.
 }

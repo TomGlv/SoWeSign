@@ -28,12 +28,15 @@
                 </Label>
                 <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                     <children>
-                        <Label fx:id="welcomeLabel" text="Bienvenue, Professeur !" textFill="WHITE">
+                        <Label fx:id="welcomeLabel" text="Bienvenue, Prof. DUPONT" textFill="WHITE">
+                            <font>
+                                <Font size="16.0" />
+                            </font>
                             <HBox.margin>
                                 <Insets right="20.0" />
                             </HBox.margin>
                         </Label>
-                        <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c;" text="Déconnexion" textFill="WHITE">
+                        <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand;" text="Déconnexion">
                             <HBox.margin>
                                 <Insets right="20.0" />
                             </HBox.margin>
@@ -44,18 +47,27 @@
         </HBox>
     </top>
     <center>
-        <SplitPane dividerPositions="0.25, 0.5" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <SplitPane dividerPositions="0.3" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <items>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                     <children>
-                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="526.0" prefWidth="262.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <children>
-                                <Label style="-fx-font-weight: bold;" text="Mes Cours">
+                                <Label style="-fx-font-weight: bold;" text="Mes Cours" />
+                                <ListView fx:id="coursListView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+                                <Separator orientation="HORIZONTAL" prefWidth="200.0" />
+                                <Label style="-fx-font-weight: bold;" text="Séances du Cours Sélectionné" />
+                                <ListView fx:id="seanceListView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+                                <Separator orientation="HORIZONTAL" prefWidth="200.0" />
+                                <Label style="-fx-font-weight: bold;" text="Détails de la Séance Sélectionnée" />
+
+                                <Label fx:id="seanceDetailsLabel" text="Sélectionnez une séance" wrapText="true">
                                     <VBox.margin>
                                         <Insets bottom="5.0" />
                                     </VBox.margin>
                                 </Label>
-                                <ListView fx:id="coursListView" VBox.vgrow="ALWAYS" />
+                                <Label fx:id="codeLabel" text="Code : Aucun" />
+                                <Button mnemonicParsing="false" onAction="#handleGenerateCode" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-cursor: hand;" text="Générer Code d'Émargement" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -65,53 +77,7 @@
                 </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                     <children>
-                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                            <children>
-                                <Label style="-fx-font-weight: bold;" text="Séances du cours sélectionné">
-                                    <VBox.margin>
-                                        <Insets bottom="5.0" />
-                                    </VBox.margin>
-                                </Label>
-                                <ListView fx:id="seanceListView" VBox.vgrow="ALWAYS" />
-
-                                <Separator prefWidth="200.0">
-                                    <VBox.margin>
-                                        <Insets bottom="10.0" top="10.0" />
-                                    </VBox.margin>
-                                </Separator>
-
-                                <Label text="Outils d'Émargement">
-                                    <font>
-                                        <Font name="System Bold" size="14.0" />
-                                    </font>
-                                    <VBox.margin>
-                                        <Insets bottom="5.0" />
-                                    </VBox.margin>
-                                </Label>
-                                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                                    <children>
-                                        <Button mnemonicParsing="false" onAction="#handleGenerateCode" text="Générer Code QR/Pin" />
-                                        <Label fx:id="codeLabel" text="Code : -----" textFill="#2c3e50">
-                                            <font>
-                                                <Font name="System Bold" size="14.0" />
-                                            </font>
-                                        </Label>
-                                    </children>
-                                    <VBox.margin>
-                                        <Insets bottom="10.0" />
-                                    </VBox.margin>
-                                </HBox>
-                                <Button mnemonicParsing="false" onAction="#handleSaveAttendance" text="Sauvegarder Présences Manuelles" />
-                            </children>
-                            <padding>
-                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                            </padding>
-                        </VBox>
-                    </children>
-                </AnchorPane>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
-                    <children>
-                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="526.0" prefWidth="200.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <children>
                                 <Label style="-fx-font-weight: bold;" text="Liste des étudiants et Présences">
                                     <VBox.margin>
@@ -127,6 +93,11 @@
                                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                     </columnResizePolicy>
                                 </TableView>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Button mnemonicParsing="false" onAction="#handleSaveAttendance" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand;" text="Enregistrer Présences Manuelles" HBox.hgrow="ALWAYS" />
+                                    </children>
+                                </HBox>
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

@@ -6,7 +6,7 @@ public class Utilisateur {
     private String motDePasseHashed;
     private String nom;
     private String prenom;
-    private Role role; // CHANGEMENT : Utilisation de l'énumération Role
+    private Role role; // ⭐️ CHANGEMENT : Utilisation de l'énumération Role
 
     public Utilisateur() {}
 
