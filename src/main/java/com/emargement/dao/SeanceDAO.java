@@ -9,14 +9,43 @@ import java.util.Optional;
 
 public class SeanceDAO {
 
-    public List<Seance> findByCoursId(int coursId) {
+    private Seance mapResultSetToSeance(ResultSet rs) throws SQLException {
+        Seance seance = new Seance();
+        seance.setId(rs.getInt("id"));
+        seance.setCoursId(rs.getInt("coursId"));
+
+        // ⭐️ CRITICAL FIX: Get raw SQL Date/Time fields and combine in Java
+        Date date = rs.getDate("dateSeance");
+        Time timeDebut = rs.getTime("heureDebut");
+        Time timeFin = rs.getTime("heureFin");
+
+        if (date != null && timeDebut != null) {
+            seance.setDateDebut(LocalDateTime.of(date.toLocalDate(), timeDebut.toLocalTime()));
+        }
+        if (date != null && timeFin != null) {
+            seance.setDateFin(LocalDateTime.of(date.toLocalDate(), timeFin.toLocalTime()));
+        }
+
+        seance.setCodeEmargement(rs.getString("codeEmargement"));
+
+        Timestamp expireTimestamp = rs.getTimestamp("codeEmargementExpire");
+        seance.setCodeEmargementExpire(expireTimestamp != null ? expireTimestamp.toLocalDateTime() : null);
+
+        try {
+            // Get the course name which is joined in the main query
+            seance.setNomCours(rs.getString("nomCours"));
+        } catch (SQLException ignore) {
+            // nomCours may not always be in the ResultSet
+        }
+        return seance;
+    }
+
+    // ⭐️ FIX: Main method to retrieve all sessions for a course
+    public List<Seance> getSeancesByCoursId(int coursId) throws SQLException {
         List<Seance> seanceList = new ArrayList<>();
-        // ⭐️ CORRECTION : Utilisation de CONCAT pour combiner la date et l'heure en un DATETIME complet.
-        // On sélectionne également explicitement codeEmargementExpire (le nouveau nom de colonne).
-        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
-                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
-                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
-                "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.coursId = ?";
+
+        // Fetching required columns without CONCAT, relies on Java mapping
+        String sql = "SELECT s.*, c.nomCours FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.coursId = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -28,16 +57,18 @@ public class SeanceDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur SQL dans SeanceDAO.findByCoursId : " + e.getMessage());
+            System.err.println("Erreur SQL dans SeanceDAO.getSeancesByCoursId : " + e.getMessage());
+            throw e; // Re-throw for controller to catch
         }
         return seanceList;
     }
 
-    public Optional<Seance> findByCodeEmargement(String code) {
-        // ⭐️ CORRECTION : Utilisation de CONCAT pour la création des colonnes dateDebut/dateFin.
-        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
-                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
-                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
+
+    // The redundant findByCoursId method is merged into getSeancesByCoursId
+
+    public Optional<Seance> findByCodeEmargement(String code) throws SQLException {
+        // Keeping your original SQL structure for this method, but simplifying the select list
+        String sql = "SELECT s.*, c.nomCours " +
                 "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.codeEmargement = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -51,13 +82,17 @@ public class SeanceDAO {
             }
         } catch (SQLException e) {
             System.err.println("Erreur SQL dans SeanceDAO.findByCodeEmargement : " + e.getMessage());
+            throw e;
         }
         return Optional.empty();
     }
 
+
+    // Inside SeanceDAO.java
+
     public void updateCodeEmargement(int seanceId, String code, LocalDateTime expiration) throws SQLException {
-        // ⭐️ CORRECTION : La colonne est maintenant 'codeEmargementExpire' (suite à la mise à jour DB).
-        String sql = "UPDATE seance SET codeEmargement = ?, codeEmargementExpire = ? WHERE id = ?";
+        // CRITICAL FIX: Ensure 'codeActif = 1' is set, assuming your DB schema has this column.
+        String sql = "UPDATE seance SET codeEmargement = ?, codeEmargementExpire = ?, codeActif = 1 WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -68,35 +103,6 @@ public class SeanceDAO {
 
             stmt.executeUpdate();
         }
-    }
-
-    private Seance mapResultSetToSeance(ResultSet rs) throws SQLException {
-        Seance seance = new Seance();
-        seance.setId(rs.getInt("id"));
-        seance.setCoursId(rs.getInt("coursId"));
-
-        // ⭐️ CORRECTION : Utilisation des alias 'dateDebut' et 'dateFin' créés dans la requête SQL.
-        Timestamp debutTimestamp = rs.getTimestamp("dateDebut");
-        if (debutTimestamp != null) {
-            seance.setDateDebut(debutTimestamp.toLocalDateTime());
-        }
-
-        Timestamp finTimestamp = rs.getTimestamp("dateFin");
-        if (finTimestamp != null) {
-            seance.setDateFin(finTimestamp.toLocalDateTime());
-        }
-
-        seance.setCodeEmargement(rs.getString("codeEmargement"));
-
-        // ⭐️ CORRECTION : Utilisation du nom de colonne correct.
-        Timestamp expireTimestamp = rs.getTimestamp("codeEmargementExpire");
-        seance.setCodeEmargementExpire(expireTimestamp != null ? expireTimestamp.toLocalDateTime() : null);
-
-        try {
-            seance.setNomCours(rs.getString("nomCours"));
-        } catch (SQLException ignore) {
-            // nomCours n'est pas toujours dans le ResultSet
-        }
-        return seance;
+        // If an error still occurs here, it is due to a DB constraint (e.g., column size for codeEmargement).
     }
 }

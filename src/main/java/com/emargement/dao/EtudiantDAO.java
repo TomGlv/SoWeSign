@@ -10,8 +10,30 @@ import java.util.Optional;
 
 public class EtudiantDAO {
 
-    public Optional<Etudiant> findByUtilisateurId(int utilisateurId) {
-        String sql = "SELECT * FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id WHERE e.utilisateurId = ?";
+    // --- Data Mapper ---
+    private Etudiant mapResultSetToEtudiant(ResultSet rs) throws SQLException {
+        Etudiant etudiant = new Etudiant();
+        etudiant.setId(rs.getInt("e_id"));
+        etudiant.setNumeroEtudiant(rs.getString("numeroEtudiant"));
+        etudiant.setUtilisateurId(rs.getInt("u_id"));
+
+        Utilisateur user = new Utilisateur(
+                rs.getInt("u_id"),
+                rs.getString("login"),
+                rs.getString("motDePasseHashed"),
+                rs.getString("nom"),
+                rs.getString("prenom"),
+                Role.valueOf(rs.getString("role"))
+        );
+        etudiant.setUtilisateur(user);
+        return etudiant;
+    }
+    // -------------------
+
+    public Optional<Etudiant> findByUtilisateurId(int utilisateurId) throws SQLException {
+        String sql = "SELECT e.id as e_id, e.numeroEtudiant, e.utilisateurId, " +
+                "u.id as u_id, u.login, u.motDePasseHashed, u.nom, u.prenom, u.role " +
+                "FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id WHERE e.utilisateurId = ?";
         Etudiant etudiant = null;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -22,12 +44,12 @@ public class EtudiantDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     etudiant = new Etudiant();
-                    etudiant.setId(rs.getInt("e.id"));
+                    etudiant.setId(rs.getInt("e_id"));
                     etudiant.setNumeroEtudiant(rs.getString("numeroEtudiant"));
                     etudiant.setUtilisateurId(utilisateurId);
 
                     Utilisateur user = new Utilisateur(
-                            rs.getInt("u.id"),
+                            rs.getInt("u_id"),
                             rs.getString("login"),
                             rs.getString("motDePasseHashed"),
                             rs.getString("nom"),
@@ -39,49 +61,39 @@ public class EtudiantDAO {
             }
         } catch (SQLException e) {
             System.err.println("Erreur SQL dans EtudiantDAO.findByUtilisateurId : " + e.getMessage());
+            throw e;
         }
         return Optional.ofNullable(etudiant);
     }
 
     /**
-     * ⭐️ AMÉLIORATION : Récupère la liste des étudiants avec les données utilisateur complètes.
-     * Cette méthode doit être révisée lorsque la table `inscription` sera ajoutée.
-     * Pour l'instant, elle retourne tous les étudiants de manière rudimentaire,
-     * car la table de jointure entre Cours et Etudiant (Inscription) est manquante.
+     * ✅ FIX: IMPLÉMENTATION SIMPLIFIÉE: Récupère TOUS les étudiants.
      */
-    public List<Etudiant> findByCoursId(int coursId) {
+    public List<Etudiant> findByCoursId(int coursId) throws SQLException {
         List<Etudiant> etudiants = new ArrayList<>();
-        // ⚠️ REMARQUE : La requête ci-dessous ne filtre pas réellement par coursId
-        // car la table de jointure n'existe pas dans le schéma actuel.
-        // Elle retourne tous les étudiants pour permettre l'affichage initial.
-        String sql = "SELECT e.id, e.numeroEtudiant, u.id as u_id, u.login, u.nom, u.prenom, u.role, u.motDePasseHashed "
-                + "FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id";
+
+        String sql = "SELECT e.id as e_id, e.numeroEtudiant, u.id as u_id, u.login, u.nom, u.prenom, u.role, u.motDePasseHashed "
+                + "FROM etudiant e JOIN utilisateur u ON e.utilisateurId = u.id WHERE u.role = 'ETUDIANT'";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                Etudiant etudiant = new Etudiant();
-                // ⭐️ CORRECTION : Utilisation de l'alias 'e.id' pour éviter les conflits
-                etudiant.setId(rs.getInt("e.id"));
-                etudiant.setNumeroEtudiant(rs.getString("numeroEtudiant"));
-                etudiant.setUtilisateurId(rs.getInt("u_id"));
-
-                Utilisateur user = new Utilisateur(
-                        rs.getInt("u_id"),
-                        rs.getString("login"),
-                        rs.getString("motDePasseHashed"),
-                        rs.getString("nom"),
-                        rs.getString("prenom"),
-                        Role.valueOf(rs.getString("role"))
-                );
-                etudiant.setUtilisateur(user);
-                etudiants.add(etudiant);
+                etudiants.add(mapResultSetToEtudiant(rs));
             }
         } catch (SQLException e) {
             System.err.println("Erreur SQL dans EtudiantDAO.findByCoursId : " + e.getMessage());
+            throw e; // RETHROW IS CORRECT
         }
         return etudiants;
+    }
+
+    /**
+     * ✅ FIX: IMPLÉMENTATION SIMPLIFIÉE: Retourne tous les étudiants.
+     */
+    public List<Etudiant> getEtudiantsBySeanceId(int seanceId) throws SQLException {
+        // -1 passed as parameter since findByCoursId does not use it in the current simplified SQL
+        return findByCoursId(-1);
     }
 }

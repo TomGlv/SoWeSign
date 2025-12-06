@@ -1,9 +1,11 @@
+// src/main/java/com/emargement/controller/LoginController.java
+
 package com.emargement.controller;
 
 import com.emargement.App;
 import com.emargement.model.Utilisateur;
 import com.emargement.service.AuthService;
-import com.emargement.session.UserSession; // ⭐️ Import pour la gestion de session
+import com.emargement.session.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -14,41 +16,43 @@ import java.util.Optional;
 
 public class LoginController {
 
-    @FXML
-    private TextField loginField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private Label messageLabel;
+    @FXML private TextField loginField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label messageLabel;
 
     private final AuthService authService = new AuthService();
 
-    /**
-     * Tente d'authentifier l'utilisateur et le redirige selon son rôle.
-     */
     @FXML
     private void handleLoginButtonAction() {
-        String login = loginField.getText();
-        String password = passwordField.getText();
+
+        String login = loginField.getText().trim();
+        String password = passwordField.getText().trim();
+
+        // 0. Validation Professeur (unchanged logic)
+        if (login.toLowerCase().endsWith(".prof@edu.ece.fr")) {
+            String regex = "^[a-z]+\\.[a-z]+\\.prof@edu\\.ece\\.fr$";
+            if (!login.matches(regex)) {
+                messageLabel.setText("Format email professeur invalide (prenom.nom.prof@edu.ece.fr)");
+                messageLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+        }
 
         // 1. Authentification
         Optional<Utilisateur> userOpt = authService.authenticate(login, password);
 
         if (userOpt.isPresent()) {
             Utilisateur user = userOpt.get();
-
-            // 2. ENREGISTREMENT DE LA SESSION
             UserSession.getInstance().setUtilisateur(user);
 
             try {
-                // 3. LOGIQUE DE REDIRECTION BASÉE SUR LE RÔLE
+                // 3. REDIRECTION SELON LE RÔLE
                 switch (user.getRole()) {
                     case ADMIN:
                         App.setRoot("DashboardAdmin");
                         break;
                     case PROFESSEUR:
+                        // FXML file name is DashboardProfesseur.fxml
                         App.setRoot("DashboardProfesseur");
                         break;
                     case ETUDIANT:
@@ -59,7 +63,6 @@ public class LoginController {
                         messageLabel.setStyle("-fx-text-fill: red;");
                 }
             } catch (IOException e) {
-                // Gestion de l'erreur si le fichier FXML n'est pas trouvé
                 System.err.println("Erreur de chargement du dashboard pour le rôle " + user.getRole());
                 e.printStackTrace();
                 messageLabel.setText("Erreur interne : Impossible de charger la vue.");
@@ -67,7 +70,7 @@ public class LoginController {
             }
 
         } else {
-            // 4. Échec de l'authentification
+            // 4. Échec de l'authentification (FIXED BY DB UPDATE)
             messageLabel.setText("Login ou mot de passe incorrect.");
             messageLabel.setStyle("-fx-text-fill: red;");
         }

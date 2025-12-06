@@ -1,5 +1,6 @@
 package com.emargement.session;
 
+import com.emargement.model.Seance;
 import com.emargement.model.Utilisateur;
 
 /**
@@ -30,5 +31,15 @@ public class UserSession {
 
     public void clearSession() {
         utilisateur = null;
+    }
+
+    public Seance getCurrentSeance() {
+        return null;
+    }
+
+    public void clearCurrentSeance() {
+    }
+
+    public void setCurrentSeance(Seance nextSeance) {
     }
 }

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
--- Hôte : 127.0.0.1
--- Généré le : mer. 03 déc. 2025 à 15:59
--- Version du serveur : 10.4.32-MariaDB
--- Version de PHP : 8.2.12
+-- Host: localhost
+-- Generation Time: Dec 06, 2025 at 02:26 PM
+-- Server version: 10.4.21-MariaDB
+-- PHP Version: 8.1.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `emargement_db`
+-- Database: `emargement_db`
 --
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `cours`
+-- Table structure for table `cours`
 --
 
 CREATE TABLE `cours` (
@@ -33,34 +33,34 @@ CREATE TABLE `cours` (
   `code` varchar(20) NOT NULL,
   `description` text DEFAULT NULL,
   `professeurId` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Déchargement des données de la table `cours`
+-- Dumping data for table `cours`
 --
 
 INSERT INTO `cours` (`id`, `nomCours`, `code`, `description`, `professeurId`) VALUES
-(1, 'Mathématiques Avancées', 'MATH301', 'Cours de mathématiques niveau L3', 2),
-(2, 'Programmation Java', 'INFO201', 'Introduction à la programmation orientée objet', 2);
+(1, 'Programmation Java', 'JAVA101', 'Introduction à la programmation Java', 2),
+(2, 'Maths Discrètes', 'MATH201', 'Mathématiques discrètes', 3);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `emargement`
+-- Table structure for table `emargement`
 --
 
 CREATE TABLE `emargement` (
   `id` int(11) NOT NULL,
   `seanceId` int(11) NOT NULL,
   `etudiantId` int(11) NOT NULL,
-  `heureEmargement` timestamp NOT NULL DEFAULT current_timestamp(),
+  `dateHeureEmargement` timestamp NOT NULL DEFAULT current_timestamp(),
   `present` tinyint(1) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `etudiant`
+-- Table structure for table `etudiant`
 --
 
 CREATE TABLE `etudiant` (
@@ -70,21 +70,42 @@ CREATE TABLE `etudiant` (
   `prenom` varchar(100) NOT NULL,
   `email` varchar(150) DEFAULT NULL,
   `utilisateurId` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Déchargement des données de la table `etudiant`
+-- Dumping data for table `etudiant`
 --
 
 INSERT INTO `etudiant` (`id`, `numeroEtudiant`, `nom`, `prenom`, `email`, `utilisateurId`) VALUES
-(1, '20231001', 'GALVAN', 'Tom', 'tom.galvan@edu.ece.fr', 3),
-(2, '20231002', 'Bernard', 'Lucas', 'lucas.bernard@edu.ece.fr', 4),
-(3, '20231003', 'Dubois', 'Emma', 'emma.dubois@edu.ece.fr', 5);
+(1, '20231001', 'Galvan', 'Tom', 'tom.galvan@edu.ece.fr', 5),
+(2, '20231002', 'Dubois', 'Emma', 'emma.dubois@edu.ece.fr', 6),
+(3, '20231003', 'Moreau', 'Paul', 'paul.moreau@edu.ece.fr', 7);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `seance`
+-- Table structure for table `prof`
+--
+
+CREATE TABLE `prof` (
+  `id` int(11) NOT NULL,
+  `utilisateurId` int(11) NOT NULL,
+  `departement` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `prof`
+--
+
+INSERT INTO `prof` (`id`, `utilisateurId`, `departement`) VALUES
+(1, 2, 'Informatique'),
+(2, 3, 'Mathématiques'),
+(3, 4, 'Electronique');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `seance`
 --
 
 CREATE TABLE `seance` (
@@ -95,149 +116,171 @@ CREATE TABLE `seance` (
   `heureFin` time NOT NULL,
   `codeEmargement` varchar(10) DEFAULT NULL,
   `codeActif` tinyint(1) DEFAULT 0,
-  `dateCreationCode` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `dateCreationCode` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `codeEmargementExpire` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Déchargement des données de la table `seance`
+-- Dumping data for table `seance`
 --
 
-INSERT INTO `seance` (`id`, `coursId`, `dateSeance`, `heureDebut`, `heureFin`, `codeEmargement`, `codeActif`, `dateCreationCode`) VALUES
-(1, 1, '2025-12-03', '08:00:00', '10:00:00', NULL, 0, '2025-12-03 08:09:06'),
-(2, 2, '2025-12-03', '14:00:00', '16:00:00', NULL, 0, '2025-12-03 08:09:06');
+INSERT INTO `seance` (`id`, `coursId`, `dateSeance`, `heureDebut`, `heureFin`, `codeEmargement`, `codeActif`, `dateCreationCode`, `codeEmargementExpire`) VALUES
+(1, 1, '2025-12-10', '08:30:00', '10:30:00', NULL, 0, '2025-12-06 13:18:45', NULL),
+(2, 2, '2025-12-11', '14:00:00', '16:00:00', NULL, 0, '2025-12-06 13:18:45', NULL);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `utilisateur`
+-- Table structure for table `utilisateur`
 --
 
 CREATE TABLE `utilisateur` (
   `id` int(11) NOT NULL,
-  `login` varchar(50) NOT NULL,
+  `login` varchar(150) NOT NULL,
   `motDePasseHashed` varchar(255) NOT NULL,
   `nom` varchar(100) NOT NULL,
   `prenom` varchar(100) NOT NULL,
   `role` enum('ADMIN','PROFESSEUR','ETUDIANT') NOT NULL,
   `dateCreation` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Déchargement des données de la table `utilisateur`
+-- Dumping data for table `utilisateur`
 --
 
 INSERT INTO `utilisateur` (`id`, `login`, `motDePasseHashed`, `nom`, `prenom`, `role`, `dateCreation`) VALUES
-(1, 'admin', '$2a$10$CCNvEoIJugmFwI9qGySm4uSOlWygGWJ/1gd2/Q7BHMaO7DyG6Okx.', 'Admin', 'Système', 'ADMIN', '2025-12-03 08:09:06'),
-(2, 'prof.dupont', '$2a$10$CCNvEoIJugmFwI9qGySm4uSOlWygGWJ/1gd2/Q7BHMaO7DyG6Okx.', 'Dupont', 'Jean', 'PROFESSEUR', '2025-12-03 08:09:06'),
-(3, '20231001', '$2a$10$CCNvEoIJugmFwI9qGySm4uSOlWygGWJ/1gd2/Q7BHMaO7DyG6Okx.', 'Martin', 'Sophie', 'ETUDIANT', '2025-12-03 08:09:06'),
-(4, '20231002', '$2a$10$dummyHashForDemo', 'Bernard', 'Lucas', 'ETUDIANT', '2025-12-03 08:09:06'),
-(5, '20231003', '$2a$10$dummyHashForDemo', 'Dubois', 'Emma', 'ETUDIANT', '2025-12-03 08:09:06');
+(1, 'admin@system.com', '<HASH_ADMIN>', 'System', 'Admin', 'ADMIN', '2025-12-06 13:17:36'),
+(2, 'jean.dupont.prof@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Dupont', 'Jean', 'PROFESSEUR', '2025-12-06 13:17:36'),
+(3, 'sarah.martin.prof@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Martin', 'Sarah', 'PROFESSEUR', '2025-12-06 13:17:36'),
+(4, 'lucas.bernard.prof@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Bernard', 'Lucas', 'PROFESSEUR', '2025-12-06 13:17:36'),
+(5, 'tom.galvan@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Galvan', 'Tom', 'ETUDIANT', '2025-12-06 13:17:36'),
+(6, 'emma.dubois@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Dubois', 'Emma', 'ETUDIANT', '2025-12-06 13:17:36'),
+(7, 'paul.moreau@edu.ece.fr', '$2a$10$ew8vfSJZgoaazVwD.qHx7.wVScz03XukvZERkUPzWUw8hyH5/eulS', 'Moreau', 'Paul', 'ETUDIANT', '2025-12-06 13:17:36');
 
 --
--- Index pour les tables déchargées
+-- Indexes for dumped tables
 --
 
 --
--- Index pour la table `cours`
+-- Indexes for table `cours`
 --
 ALTER TABLE `cours`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `professeurId` (`professeurId`);
+  ADD UNIQUE KEY `uq_code` (`code`),
+  ADD KEY `idx_professeurId` (`professeurId`);
 
 --
--- Index pour la table `emargement`
+-- Indexes for table `emargement`
 --
 ALTER TABLE `emargement`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_presence` (`seanceId`,`etudiantId`),
-  ADD KEY `etudiantId` (`etudiantId`);
+  ADD UNIQUE KEY `uq_presence` (`seanceId`,`etudiantId`),
+  ADD KEY `idx_etudiantId` (`etudiantId`);
 
 --
--- Index pour la table `etudiant`
+-- Indexes for table `etudiant`
 --
 ALTER TABLE `etudiant`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `numeroEtudiant` (`numeroEtudiant`),
-  ADD KEY `utilisateurId` (`utilisateurId`);
+  ADD UNIQUE KEY `uq_numeroEtudiant` (`numeroEtudiant`),
+  ADD KEY `idx_utilisateurId` (`utilisateurId`);
 
 --
--- Index pour la table `seance`
+-- Indexes for table `prof`
+--
+ALTER TABLE `prof`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_prof_user` (`utilisateurId`);
+
+--
+-- Indexes for table `seance`
 --
 ALTER TABLE `seance`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `codeEmargement` (`codeEmargement`),
-  ADD KEY `coursId` (`coursId`);
+  ADD UNIQUE KEY `uq_codeEmargement` (`codeEmargement`),
+  ADD KEY `idx_coursId` (`coursId`);
 
 --
--- Index pour la table `utilisateur`
+-- Indexes for table `utilisateur`
 --
 ALTER TABLE `utilisateur`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `login` (`login`);
+  ADD UNIQUE KEY `uq_login` (`login`);
 
 --
--- AUTO_INCREMENT pour les tables déchargées
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT pour la table `cours`
+-- AUTO_INCREMENT for table `cours`
 --
 ALTER TABLE `cours`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT pour la table `emargement`
+-- AUTO_INCREMENT for table `emargement`
 --
 ALTER TABLE `emargement`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `etudiant`
+-- AUTO_INCREMENT for table `etudiant`
 --
 ALTER TABLE `etudiant`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT pour la table `seance`
+-- AUTO_INCREMENT for table `prof`
+--
+ALTER TABLE `prof`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `seance`
 --
 ALTER TABLE `seance`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT pour la table `utilisateur`
+-- AUTO_INCREMENT for table `utilisateur`
 --
 ALTER TABLE `utilisateur`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- Contraintes pour les tables déchargées
+-- Constraints for dumped tables
 --
 
 --
--- Contraintes pour la table `cours`
+-- Constraints for table `cours`
 --
 ALTER TABLE `cours`
-  ADD CONSTRAINT `cours_ibfk_1` FOREIGN KEY (`professeurId`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_cours_prof` FOREIGN KEY (`professeurId`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
 
 --
--- Contraintes pour la table `emargement`
+-- Constraints for table `emargement`
 --
 ALTER TABLE `emargement`
-  ADD CONSTRAINT `emargement_ibfk_1` FOREIGN KEY (`seanceId`) REFERENCES `seance` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `emargement_ibfk_2` FOREIGN KEY (`etudiantId`) REFERENCES `etudiant` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_emargement_etudiant` FOREIGN KEY (`etudiantId`) REFERENCES `etudiant` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_emargement_seance` FOREIGN KEY (`seanceId`) REFERENCES `seance` (`id`) ON DELETE CASCADE;
 
 --
--- Contraintes pour la table `etudiant`
+-- Constraints for table `etudiant`
 --
 ALTER TABLE `etudiant`
-  ADD CONSTRAINT `etudiant_ibfk_1` FOREIGN KEY (`utilisateurId`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_etudiant_user` FOREIGN KEY (`utilisateurId`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
 
 --
--- Contraintes pour la table `seance`
+-- Constraints for table `prof`
+--
+ALTER TABLE `prof`
+  ADD CONSTRAINT `fk_prof_user` FOREIGN KEY (`utilisateurId`) REFERENCES `utilisateur` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `seance`
 --
 ALTER TABLE `seance`
-  ADD CONSTRAINT `seance_ibfk_1` FOREIGN KEY (`coursId`) REFERENCES `cours` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_seance_cours` FOREIGN KEY (`coursId`) REFERENCES `cours` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

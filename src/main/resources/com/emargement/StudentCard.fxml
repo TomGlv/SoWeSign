@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox alignment="CENTER_LEFT" spacing="20" styleClass="student-card"
+      xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="studentCardRoot">
+
+    <padding>
+        <Insets top="15" bottom="15" left="20" right="20"/>
+    </padding>
+
+    <VBox HBox.hgrow="ALWAYS">
+        <Label fx:id="studentNameLabel" styleClass="student-name-text"/>
+        <Label fx:id="studentEmailLabel" styleClass="student-email-text"/>
+    </VBox>
+
+    <Label fx:id="statusPill" text="En attente" styleClass="status-pill-pending"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="presentBtn" text="Présent" styleClass="btn-status btn-present"/>
+        <Button fx:id="absentBtn" text="Absent" styleClass="btn-status btn-absent"/>
+    </HBox>
+</HBox>

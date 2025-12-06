@@ -32,4 +32,8 @@ public class CoursDAO {
         }
         return coursList;
     }
+
+    public List<Cours> getCoursByProfId(int id) {
+        return List.of();
+    }
 }

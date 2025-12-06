@@ -2,190 +2,192 @@ package com.emargement.controller;
 
 import com.emargement.App;
 import com.emargement.model.Cours;
-import com.emargement.model.Etudiant;
 import com.emargement.model.Seance;
 import com.emargement.model.Utilisateur;
 import com.emargement.dao.CoursDAO;
-import com.emargement.dao.EtudiantDAO; // Import manquant ajouté
 import com.emargement.dao.SeanceDAO;
-import com.emargement.service.EmargementService;
+import com.emargement.dao.EtudiantDAO;
 import com.emargement.session.UserSession;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.beans.property.SimpleStringProperty; // Import nécessaire
-import javafx.util.Callback;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
+import javafx.application.Platform;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 public class DashboardProfesseurController {
 
     @FXML private Label welcomeLabel;
-    @FXML private ListView<Cours> coursListView;
-    @FXML private ListView<Seance> seanceListView;
-    @FXML private TableView<Etudiant> etudiantTableView;
-    @FXML private TableColumn<Etudiant, String> colNom;
-    @FXML private TableColumn<Etudiant, String> colNumero;
-    @FXML private Label codeLabel;
+    @FXML private Label dateLabel;
+    @FXML private Label subjectLabel;
+    @FXML private Label sessionTimeLabel;
+    @FXML private Label studentCountLabel;
+    @FXML private Button startBtn;
+    @FXML private Button themeToggleBtn;
 
     private final CoursDAO coursDAO = new CoursDAO();
     private final SeanceDAO seanceDAO = new SeanceDAO();
-    private final EtudiantDAO etudiantDAO = new EtudiantDAO(); // Instanciation du DAO Etudiant
-    private final EmargementService emargementService = new EmargementService();
+    private final EtudiantDAO etudiantDAO = new EtudiantDAO();
 
-    private Cours selectedCours = null; // Ajout pour suivre le cours sélectionné
-    private Seance selectedSeance = null;
+    private boolean isDarkMode = false;
+    private Cours nextCourse;
+    private Seance nextSeance;
 
-    // Méthode appelée automatiquement après le chargement du FXML
+    private static final long SESSION_DURATION_HOURS = 2;
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+
     @FXML
     public void initialize() {
-        Utilisateur professeur = UserSession.getInstance().getUtilisateur();
-        welcomeLabel.setText("Bienvenue, Professeur " + professeur.getPrenom() + " " + professeur.getNom() + " !");
+        Utilisateur user = UserSession.getInstance().getUtilisateur();
+        welcomeLabel.setText("Bonjour, Professeur " + user.getPrenom() + " " + user.getNom());
 
-        // Configuration des colonnes
-        // ⭐️ CORRECTION/AJUSTEMENT : Utilisation de getUtilisateur().getNom() et getPrenom() pour afficher le nom complet
-        colNom.setCellValueFactory(cellData -> {
-            Utilisateur user = cellData.getValue().getUtilisateur();
-            if (user != null) {
-                return new SimpleStringProperty(user.getNom() + " " + user.getPrenom());
-            }
-            return new SimpleStringProperty("");
-        });
-        colNumero.setCellValueFactory(new PropertyValueFactory<>("numeroEtudiant"));
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy · HH:mm");
+        dateLabel.setText(LocalDateTime.now().format(dateFormat));
 
-        // 1. Gérer la SELECTION DANS LA LISTE DES COURS
-        coursListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            selectedCours = newValue;
-            if (newValue != null) {
-                loadSeances(newValue.getId());
-                // Réinitialiser les vues de la séance précédente
-                seanceListView.getSelectionModel().clearSelection(); // Efface la sélection de séance
-                etudiantTableView.getItems().clear();
-                codeLabel.setText("Code : N/A");
-                selectedSeance = null;
-            } else {
-                seanceListView.getItems().clear();
-            }
-        });
+        themeToggleBtn.setOnAction(e -> toggleTheme());
 
-        // 2. Gérer la SELECTION DANS LA LISTE DES SÉANCES
-        seanceListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            selectedSeance = newValue;
-            if (newValue != null) {
-                // Afficher le code existant de la séance ou N/A
-                String code = (newValue.getCodeEmargement() != null && newValue.getCodeEmargementExpire() != null && newValue.getCodeEmargementExpire().isAfter(LocalDateTime.now()))
-                        ? newValue.getCodeEmargement()
-                        : "N/A";
-                codeLabel.setText("Code : " + code);
-
-                // Charger les étudiants pour la séance sélectionnée
-                loadEtudiantsBySeance(newValue.getCoursId()); // On charge les étudiants par l'ID du cours de la séance
-            } else {
-                // Si la sélection est effacée
-                etudiantTableView.getItems().clear();
-                codeLabel.setText("Code : N/A");
-            }
-        });
-
-        // 3. Charger les cours de l'enseignant au démarrage
-        loadCours(professeur.getId());
+        startBtn.setDisable(true);
+        loadNextScheduledSession(user.getId());
     }
 
-    /**
-     * Charge les cours de l'enseignant.
-     */
-    private void loadCours(int professeurId) {
-        List<Cours> coursList = coursDAO.findByProfesseurId(professeurId);
-        ObservableList<Cours> cours = FXCollections.observableArrayList(coursList);
-        coursListView.setItems(cours);
-    }
+    private void loadNextScheduledSession(int userId) {
+        new Thread(() -> {
+            try {
+                List<Cours> profCourses = coursDAO.findByProfesseurId(userId);
 
-    /**
-     * Charge les séances associées au cours sélectionné.
-     */
-    private void loadSeances(int coursId) {
-        ObservableList<Seance> seances = FXCollections.observableArrayList(seanceDAO.findByCoursId(coursId));
-        seanceListView.setItems(seances);
-    }
+                if (profCourses.isEmpty()) {
+                    Platform.runLater(() -> subjectLabel.setText("Aucun cours n'est assigné à votre compte."));
+                    return;
+                }
 
-    /**
-     * Charge la liste des étudiants pour le cours associé à la séance.
-     */
-    private void loadEtudiantsBySeance(int coursId) {
-        // ⚠️ NOTE : Votre EtudiantDAO.findByCoursId actuel semble retourner TOUS les étudiants.
-        // Cela devrait être corrigé dans EtudiantDAO pour joindre la table d'inscription (si elle existe).
-        // En attendant, on utilise la méthode disponible.
-        List<Etudiant> etudiantsList = etudiantDAO.findByCoursId(coursId);
+                // Find the absolute NEXT scheduled session across ALL courses
+                Optional<Seance> nextSessionOpt = profCourses.stream()
+                        .flatMap(cours -> {
+                            try {
+                                // Use getSeancesByCoursId which throws SQLException, requiring the try-catch
+                                return seanceDAO.getSeancesByCoursId(cours.getId()).stream()
+                                        .filter(s -> s.getDateDebut() != null && s.getDateDebut().isAfter(LocalDateTime.now()))
+                                        .map(s -> {
+                                            s.setNomCours(cours.getNomCours());
+                                            return s;
+                                        });
+                            } catch (SQLException e) {
+                                System.err.println("Erreur de chargement des séances pour le cours ID: " + cours.getId() + ": " + e.getMessage());
+                                return null;
+                            }
+                        })
+                        .filter(s -> s != null)
+                        .sorted((s1, s2) -> s1.getDateDebut().compareTo(s2.getDateDebut()))
+                        .findFirst();
 
-        // TODO: Une fois la table 'Emargement' remplie, ajuster ici pour afficher l'état de présence.
+                Platform.runLater(() -> {
+                    if (nextSessionOpt.isPresent()) {
+                        this.nextSeance = nextSessionOpt.get();
+                        this.nextCourse = profCourses.stream()
+                                .filter(c -> c.getId() == nextSeance.getCoursId())
+                                .findFirst().orElse(null);
 
-        ObservableList<Etudiant> etudiants = FXCollections.observableArrayList(etudiantsList);
-        etudiantTableView.setItems(etudiants);
-    }
+                        if (this.nextCourse == null) {
+                            subjectLabel.setText("Erreur: Cours Inconnu");
+                            startBtn.setDisable(true);
+                            return;
+                        }
 
-    // --- Gestion des Actions de Boutons ---
+                        updateDashboardDetails(nextCourse, nextSeance);
+                        startBtn.setDisable(false);
+                    } else {
+                        subjectLabel.setText("Aucune séance planifiée prochainement.");
+                        sessionTimeLabel.setText("Veuillez vérifier votre emploi du temps.");
+                    }
+                });
 
-    @FXML
-    private void handleGenerateCode() {
-        if (selectedSeance == null) {
-            showAlert("Erreur", "Veuillez sélectionner une séance d'abord.");
-            return;
-        }
-
-        Optional<String> codeOpt = emargementService.generateUniqueCode(selectedSeance.getId());
-
-        if (codeOpt.isPresent()) {
-            // Mettre à jour l'objet seance local et le Label
-            selectedSeance.setCodeEmargement(codeOpt.get());
-            selectedSeance.setCodeEmargementExpire(LocalDateTime.now().plusMinutes(EmargementService.VALIDITE_MINUTES));
-            codeLabel.setText("Code : " + codeOpt.get());
-
-            // Recharger les séances pour mettre à jour la liste visuellement
-            if (selectedCours != null) {
-                loadSeances(selectedCours.getId());
-                // Resélectionner la séance pour la garder visible
-                seanceListView.getSelectionModel().select(selectedSeance);
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    subjectLabel.setText("Erreur de connexion à la base de données.");
+                    new Alert(AlertType.ERROR, "Erreur lors du chargement des données initiales.").showAndWait();
+                });
+                e.printStackTrace();
             }
+        }).start();
+    }
 
-            showAlert("Succès", "Code généré : " + codeOpt.get() + ". Valide pendant " + EmargementService.VALIDITE_MINUTES + " minutes.");
+    private void updateDashboardDetails(Cours cours, Seance seance) {
+        subjectLabel.setText(cours.getNomCours() + " (" + cours.getCode() + ")");
+
+        LocalDateTime dateDebut = seance.getDateDebut();
+        LocalDateTime dateFin = seance.getDateFin();
+
+        // Ensure dateFin is valid, otherwise default to 2 hours
+        if (dateFin == null || dateFin.isEqual(dateDebut)) {
+            dateFin = dateDebut.plusHours(SESSION_DURATION_HOURS);
+            sessionTimeLabel.setText(
+                    dateDebut.format(DATE_TIME_FORMAT) + " → " + dateFin.format(TIME_FORMAT) + " (Durée estimée)"
+            );
         } else {
-            showAlert("Erreur", "Échec de la génération du code.");
+            sessionTimeLabel.setText(
+                    dateDebut.format(DATE_TIME_FORMAT) + " → " + dateFin.format(TIME_FORMAT)
+            );
+        }
+
+        try {
+            int studentCount = etudiantDAO.findByCoursId(cours.getId()).size();
+            studentCountLabel.setText(String.valueOf(studentCount));
+        } catch (Exception e) {
+            studentCountLabel.setText("Erreur");
         }
     }
 
     @FXML
-    private void handleSaveAttendance() {
-        if (selectedSeance == null) {
-            showAlert("Erreur", "Veuillez sélectionner une séance.");
+    private void handleStartSession() {
+        if (nextSeance == null || startBtn.isDisable()) {
+            new Alert(AlertType.WARNING, "Impossible de démarrer. Aucune séance n'est planifiée.").showAndWait();
             return;
         }
-
-        // TODO: Implémenter la logique de sauvegarde des présences manuelles basées sur la TableView
-        System.out.println("Sauvegarde des présences manuelles pour la séance ID: " + selectedSeance.getId());
-        showAlert("Succès", "Présences enregistrées (Simulé).");
-    }
-
-    @FXML
-    private void handleLogout() {
-        UserSession.getInstance().clearSession();
         try {
-            App.setRoot("Login");
+            UserSession.getInstance().setCurrentSeance(nextSeance);
+            App.setRoot("SessionView");
         } catch (IOException e) {
+            new Alert(AlertType.ERROR, "Impossible de charger la vue de session. Vérifiez SessionView.fxml.").showAndWait();
             e.printStackTrace();
         }
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void toggleTheme() {
+        Scene scene = themeToggleBtn.getScene();
+        isDarkMode = !isDarkMode;
+
+        String cssPath = isDarkMode ?
+                "/com/emargement/styles-dark.css" :
+                "/com/emargement/styles.css";
+
+        scene.getStylesheets().clear();
+
+        try {
+            scene.getStylesheets().add(
+                    getClass().getResource(cssPath).toExternalForm()
+            );
+            themeToggleBtn.setText(isDarkMode ? "☀️ Mode clair" : "🌗 Mode sombre");
+        } catch (Exception e) {
+            new Alert(AlertType.ERROR, "Erreur de chargement du thème.").showAndWait();
+            e.printStackTrace();
+            try {
+                scene.getStylesheets().add(getClass().getResource("/com/emargement/styles.css").toExternalForm());
+            } catch (Exception ignore) {}
+        }
+    }
+
+    @FXML
+    private void handleLogout() throws IOException {
+        UserSession.getInstance().clearSession();
+        App.setRoot("Login");
     }
 }

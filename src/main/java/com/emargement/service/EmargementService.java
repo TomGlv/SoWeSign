@@ -9,7 +9,6 @@ import com.emargement.model.Utilisateur;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.sql.SQLException;
 
@@ -17,21 +16,22 @@ public class EmargementService {
 
     private final SeanceDAO seanceDAO = new SeanceDAO();
     private final EtudiantDAO etudiantDAO = new EtudiantDAO();
-    private final EmargementDAO emargementDAO = new EmargementDAO(); // ⭐️ Ajout du DAO
+    private final EmargementDAO emargementDAO = new EmargementDAO();
 
-    // Durée de validité du code (10 minutes)
+    // Durée de validité du code (en minutes)
     public static final long VALIDITE_MINUTES = 10;
 
     /**
-     * Génère un code unique de 6 caractères et l'enregistre pour la séance.
+     * ✅ FIX: PROF : génère un code unique de 4 chiffres (0-9) pour la séance.
      */
     public Optional<String> generateUniqueCode(int seanceId) {
         SecureRandom random = new SecureRandom();
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        // ✅ FIX: Limité aux chiffres pour obtenir un code "à 4 chiffres"
+        String characters = "0123456789";
         StringBuilder code = new StringBuilder();
 
-        // Génère un code de 6 caractères
-        for (int i = 0; i < 6; i++) {
+        // Génération de 4 caractères
+        for (int i = 0; i < 4; i++) {
             code.append(characters.charAt(random.nextInt(characters.length())));
         }
 
@@ -42,14 +42,14 @@ public class EmargementService {
             seanceDAO.updateCodeEmargement(seanceId, finalCode, expiration);
             return Optional.of(finalCode);
         } catch (SQLException e) {
-            System.err.println("Erreur lors de l'enregistrement du code pour la séance " + seanceId + ": " + e.getMessage());
+            // L'échec se produit ici à cause d'une contrainte BDD (colonne manquante ou trop petite).
+            System.err.println("Erreur fatale lors de l'enregistrement du code pour la séance " + seanceId + ": " + e.getMessage());
             return Optional.empty();
         }
     }
 
     /**
-     * Tente d'émarger un étudiant avec un code unique.
-     * Gère la vérification du code et de l'expiration.
+     * ÉTUDIANT : tente d'émarger avec un code.
      */
     public boolean emarger(String code, Utilisateur utilisateur) {
         try {
@@ -62,8 +62,9 @@ public class EmargementService {
 
             Seance seance = seanceOpt.get();
 
-            // Vérification de l'expiration
-            if (seance.getCodeEmargementExpire() == null || seance.getCodeEmargementExpire().isBefore(LocalDateTime.now())) {
+            // Vérification expiration
+            if (seance.getCodeEmargementExpire() == null ||
+                    seance.getCodeEmargementExpire().isBefore(LocalDateTime.now())) {
                 System.out.println("DEBUG SERVICE: Code expiré.");
                 return false;
             }
@@ -75,7 +76,6 @@ public class EmargementService {
             }
             Etudiant etudiant = etudiantOpt.get();
 
-            // ⭐️ Enregistrer l'émargement dans la table 'emargement'
             boolean success = emargementDAO.createEmargement(seance.getId(), etudiant.getId());
             if (success) {
                 System.out.println("DEBUG SERVICE: Émargement réussi pour l'étudiant " + utilisateur.getLogin());
@@ -83,11 +83,24 @@ public class EmargementService {
                 System.out.println("DEBUG SERVICE: Échec de l'émargement (probablement déjà enregistré).");
             }
             return success;
+
         } catch (SQLException e) {
             System.err.println("Erreur SQL lors de l'émargement : " + e.getMessage());
             return false;
         }
     }
 
-    // TODO: Ajouter une méthode pour récupérer les étudiants et leur statut de présence pour une séance.
+    /**
+     * PROF : marquer présence/absence manuelle (pour DashboardProfesseur).
+     * Tu pourras l'appeler dans handleSaveAttendance().
+     */
+    public boolean setPresence(int seanceId, int etudiantId, boolean present) {
+        try {
+            emargementDAO.upsertPresence(seanceId, etudiantId, present);
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la sauvegarde de présence manuelle : " + e.getMessage());
+            return false;
+        }
+    }
 }
