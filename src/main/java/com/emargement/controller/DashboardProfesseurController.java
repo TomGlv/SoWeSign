@@ -1,193 +1,227 @@
 package com.emargement.controller;
 
 import com.emargement.App;
-import com.emargement.model.Cours;
+import com.emargement.dao.EtudiantDAO;
+import com.emargement.dao.SeanceDAO;
+import com.emargement.model.Etudiant;
 import com.emargement.model.Seance;
 import com.emargement.model.Utilisateur;
-import com.emargement.dao.CoursDAO;
-import com.emargement.dao.SeanceDAO;
-import com.emargement.dao.EtudiantDAO;
+import com.emargement.service.EmargementService;
 import com.emargement.session.UserSession;
-
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert.AlertType;
-import javafx.application.Platform;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class DashboardProfesseurController {
 
-    @FXML private Label welcomeLabel;
-    @FXML private Label dateLabel;
-    @FXML private Label subjectLabel;
-    @FXML private Label sessionTimeLabel;
-    @FXML private Label studentCountLabel;
-    @FXML private Button startBtn;
-    @FXML private Button themeToggleBtn;
+    // TOP BAR
+    @FXML private Label topDateLabel;
+    @FXML private Label topSubjectLabel;
 
-    private final CoursDAO coursDAO = new CoursDAO();
+    // SIDEBAR
+    @FXML private Label welcomeLabel;
+    @FXML private Button logoutButton;
+
+    // CENTER
+    @FXML private ListView<Etudiant> studentListView;
+
+    // RIGHT
+    @FXML private Button codeModeButton;
+    @FXML private Button qrModeButton;
+    @FXML private Label codeValueLabel;
+    @FXML private ImageView qrImageView;
+    @FXML private Button validateButton;
+
     private final SeanceDAO seanceDAO = new SeanceDAO();
     private final EtudiantDAO etudiantDAO = new EtudiantDAO();
+    private final EmargementService emargementService = new EmargementService();
 
-    private boolean isDarkMode = false;
-    private Cours nextCourse;
-    private Seance nextSeance;
+    private Seance currentSeance;
 
-    private static final long SESSION_DURATION_HOURS = 2;
-    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private enum PresenceStatus { NEUTRAL, ABSENT, PRESENT }
+    private final Map<Integer, PresenceStatus> presenceMap = new HashMap<>();
 
     @FXML
-    public void initialize() {
-        Utilisateur user = UserSession.getInstance().getUtilisateur();
-        welcomeLabel.setText("Bonjour, Professeur " + user.getPrenom() + " " + user.getNom());
-
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy · HH:mm");
-        dateLabel.setText(LocalDateTime.now().format(dateFormat));
-
-        themeToggleBtn.setOnAction(e -> toggleTheme());
-
-        startBtn.setDisable(true);
-        loadNextScheduledSession(user.getId());
-    }
-
-    private void loadNextScheduledSession(int userId) {
-        new Thread(() -> {
-            try {
-                List<Cours> profCourses = coursDAO.findByProfesseurId(userId);
-
-                if (profCourses.isEmpty()) {
-                    Platform.runLater(() -> subjectLabel.setText("Aucun cours n'est assigné à votre compte."));
-                    return;
-                }
-
-                // Find the absolute NEXT scheduled session across ALL courses
-                Optional<Seance> nextSessionOpt = profCourses.stream()
-                        .flatMap(cours -> {
-                            try {
-                                // Use getSeancesByCoursId which throws SQLException, requiring the try-catch
-                                return seanceDAO.getSeancesByCoursId(cours.getId()).stream()
-                                        .filter(s -> s.getDateDebut() != null && s.getDateDebut().isAfter(LocalDateTime.now()))
-                                        .map(s -> {
-                                            s.setNomCours(cours.getNomCours());
-                                            return s;
-                                        });
-                            } catch (SQLException e) {
-                                System.err.println("Erreur de chargement des séances pour le cours ID: " + cours.getId() + ": " + e.getMessage());
-                                return null;
-                            }
-                        })
-                        .filter(s -> s != null)
-                        .sorted((s1, s2) -> s1.getDateDebut().compareTo(s2.getDateDebut()))
-                        .findFirst();
-
-                Platform.runLater(() -> {
-                    if (nextSessionOpt.isPresent()) {
-                        this.nextSeance = nextSessionOpt.get();
-                        this.nextCourse = profCourses.stream()
-                                .filter(c -> c.getId() == nextSeance.getCoursId())
-                                .findFirst().orElse(null);
-
-                        if (this.nextCourse == null) {
-                            subjectLabel.setText("Erreur: Cours Inconnu");
-                            startBtn.setDisable(true);
-                            return;
-                        }
-
-                        updateDashboardDetails(nextCourse, nextSeance);
-                        startBtn.setDisable(false);
-                    } else {
-                        subjectLabel.setText("Aucune séance planifiée prochainement.");
-                        sessionTimeLabel.setText("Veuillez vérifier votre emploi du temps.");
-                    }
-                });
-
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    subjectLabel.setText("Erreur de connexion à la base de données.");
-                    new Alert(AlertType.ERROR, "Erreur lors du chargement des données initiales.").showAndWait();
-                });
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    private void updateDashboardDetails(Cours cours, Seance seance) {
-        subjectLabel.setText(cours.getNomCours() + " (" + cours.getCode() + ")");
-
-        LocalDateTime dateDebut = seance.getDateDebut();
-        LocalDateTime dateFin = seance.getDateFin();
-
-        // Ensure dateFin is valid, otherwise default to 2 hours
-        if (dateFin == null || dateFin.isEqual(dateDebut)) {
-            dateFin = dateDebut.plusHours(SESSION_DURATION_HOURS);
-            sessionTimeLabel.setText(
-                    dateDebut.format(DATE_TIME_FORMAT) + " → " + dateFin.format(TIME_FORMAT) + " (Durée estimée)"
-            );
-        } else {
-            sessionTimeLabel.setText(
-                    dateDebut.format(DATE_TIME_FORMAT) + " → " + dateFin.format(TIME_FORMAT)
-            );
-        }
-
-        try {
-            int studentCount = etudiantDAO.findByCoursId(cours.getId()).size();
-            studentCountLabel.setText(String.valueOf(studentCount));
-        } catch (Exception e) {
-            studentCountLabel.setText("Erreur");
-        }
-    }
-
-    @FXML
-    private void handleStartSession() {
-        if (nextSeance == null || startBtn.isDisable()) {
-            new Alert(AlertType.WARNING, "Impossible de démarrer. Aucune séance n'est planifiée.").showAndWait();
+    public void initialize() throws SQLException {
+        Utilisateur prof = UserSession.getInstance().getUtilisateur();
+        if (prof == null) {
+            try { App.setRoot("Login"); } catch (IOException ignored) {}
             return;
         }
-        try {
-            UserSession.getInstance().setCurrentSeance(nextSeance);
-            App.setRoot("SessionView");
-        } catch (IOException e) {
-            new Alert(AlertType.ERROR, "Impossible de charger la vue de session. Vérifiez SessionView.fxml.").showAndWait();
-            e.printStackTrace();
+
+        welcomeLabel.setText("Bonjour, " + prof.getPrenom() + " " + prof.getNom());
+
+        Optional<Seance> nextSeanceOpt = seanceDAO.findNextByProfesseurId(prof.getId());
+        if (nextSeanceOpt.isEmpty()) {
+            topSubjectLabel.setText("Aucune séance à venir");
+            topDateLabel.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            validateButton.setDisable(true);
+            return;
         }
-    }
 
-    @FXML
-    private void toggleTheme() {
-        Scene scene = themeToggleBtn.getScene();
-        isDarkMode = !isDarkMode;
+        currentSeance = nextSeanceOpt.get();
 
-        String cssPath = isDarkMode ?
-                "/com/emargement/styles-dark.css" :
-                "/com/emargement/styles.css";
+        topSubjectLabel.setText(
+                currentSeance.getNomCours() != null ? currentSeance.getNomCours() : "Cours"
+        );
 
-        scene.getStylesheets().clear();
-
-        try {
-            scene.getStylesheets().add(
-                    getClass().getResource(cssPath).toExternalForm()
+        if (currentSeance.getDateDebut() != null) {
+            topDateLabel.setText(
+                    currentSeance.getDateDebut().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
             );
-            themeToggleBtn.setText(isDarkMode ? "☀️ Mode clair" : "🌗 Mode sombre");
-        } catch (Exception e) {
-            new Alert(AlertType.ERROR, "Erreur de chargement du thème.").showAndWait();
-            e.printStackTrace();
-            try {
-                scene.getStylesheets().add(getClass().getResource("/com/emargement/styles.css").toExternalForm());
-            } catch (Exception ignore) {}
+        }
+
+        loadStudentsForCurrentSeance();
+        autoGenerateOrLoadCode();
+        setCodeMode(true);
+    }
+
+    // AUTO CODE GENERATION
+    private void autoGenerateOrLoadCode() {
+        if (currentSeance == null) return;
+
+        // Reuse existing non-expired code
+        if (currentSeance.getCodeEmargement() != null &&
+                currentSeance.getCodeEmargementExpire() != null &&
+                currentSeance.getCodeEmargementExpire().isAfter(java.time.LocalDateTime.now())) {
+
+            codeValueLabel.setText(currentSeance.getCodeEmargement());
+            return;
+        }
+
+        // Generate fresh 4-digit code
+        var codeOpt = emargementService.generateUniqueCode(currentSeance.getId());
+        if (codeOpt.isPresent()) {
+            String code = codeOpt.get();
+            codeValueLabel.setText(code);
+
+            currentSeance.setCodeEmargement(code);
+            currentSeance.setCodeEmargementExpire(
+                    java.time.LocalDateTime.now().plusMinutes(EmargementService.VALIDITE_MINUTES)
+            );
+        } else {
+            codeValueLabel.setText("----");
         }
     }
 
+    // LOAD STUDENTS
+    private void loadStudentsForCurrentSeance() throws SQLException {
+        var studentsList = etudiantDAO.findByCoursId(currentSeance.getCoursId());
+        ObservableList<Etudiant> observableStudents = FXCollections.observableArrayList(studentsList);
+
+        studentListView.setItems(observableStudents);
+
+        presenceMap.clear();
+        for (Etudiant e : studentsList)
+            presenceMap.put(e.getId(), PresenceStatus.NEUTRAL);
+
+        studentListView.setCellFactory(listView -> new StudentCardCell());
+    }
+
+    // STUDENT CARD CELL
+    private class StudentCardCell extends ListCell<Etudiant> {
+        @Override
+        protected void updateItem(Etudiant student, boolean empty) {
+            super.updateItem(student, empty);
+
+            if (empty || student == null) {
+                setGraphic(null);
+                return;
+            }
+
+            VBox card = new VBox(2);
+            Label nameLabel = new Label(student.getNomComplet());
+            Label emailLabel = new Label(student.getLogin());
+
+            card.getChildren().addAll(nameLabel, emailLabel);
+            card.setStyle(styleFor(student));
+
+            card.setOnMouseClicked(e -> {
+                toggleAbsence(student);
+                card.setStyle(styleFor(student));
+            });
+
+            setGraphic(card);
+        }
+
+        private String styleFor(Etudiant student) {
+            PresenceStatus status = presenceMap.get(student.getId());
+
+            String base = "-fx-padding: 10; -fx-background-radius: 20; -fx-border-radius: 20;";
+            return switch (status) {
+                case ABSENT -> base + " -fx-background-color: #ffb3b3;";
+                case PRESENT -> base + " -fx-background-color: #b7f0b7;";
+                default -> base + " -fx-background-color: #f3f3f3;";
+            };
+        }
+    }
+
+    // TOGGLE ABSENCE
+    private void toggleAbsence(Etudiant student) {
+        int id = student.getId();
+        PresenceStatus current = presenceMap.get(id);
+
+        PresenceStatus next =
+                (current == PresenceStatus.ABSENT ? PresenceStatus.NEUTRAL : PresenceStatus.ABSENT);
+
+        presenceMap.put(id, next);
+        studentListView.refresh();
+    }
+
+    // SWITCH DISPLAY MODE
+    @FXML private void handleCodeMode() { setCodeMode(true); }
+    @FXML private void handleQrMode() { setCodeMode(false); }
+
+    private void setCodeMode(boolean codeMode) {
+        codeValueLabel.setVisible(codeMode);
+        codeValueLabel.setManaged(codeMode);
+
+        qrImageView.setVisible(!codeMode);
+        qrImageView.setManaged(!codeMode);
+    }
+
+    // SAVE ATTENDANCE
     @FXML
-    private void handleLogout() throws IOException {
+    private void handleSaveAttendance() {
+        int seanceId = currentSeance.getId();
+
+        for (Etudiant e : studentListView.getItems()) {
+            PresenceStatus status = presenceMap.get(e.getId());
+
+            boolean present = (status != PresenceStatus.ABSENT);
+
+            if (present) presenceMap.put(e.getId(), PresenceStatus.PRESENT);
+
+            emargementService.setPresence(seanceId, e.getId(), present);
+        }
+
+        studentListView.refresh();
+        showAlert("Succès", "Présences enregistrées !");
+    }
+
+    // LOGOUT
+    @FXML
+    private void handleLogout() {
         UserSession.getInstance().clearSession();
-        App.setRoot("Login");
+        try { App.setRoot("Login"); } catch (IOException ignored) {}
+    }
+
+    // ALERT
+    private void showAlert(String title, String msg) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(null);
+        alert.setTitle(title);
+        alert.setContentText(msg);
+        alert.showAndWait();
     }
 }

@@ -1,61 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
 
-<BorderPane stylesheets="@styles.css"
-            xmlns="http://javafx.com/javafx/17.0.12"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.emargement.controller.DashboardProfesseurController"
-            styleClass="root-dashboard">
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.emargement.controller.DashboardProfesseurController">
 
+    <!-- TOP BAR -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-pane">
+        <HBox spacing="20" BorderPane.alignment="CENTER_LEFT">
             <padding>
-                <Insets top="40" right="40" bottom="20" left="40"/>
+                <Insets top="15" right="15" bottom="15" left="15" />
             </padding>
-            <VBox spacing="5" HBox.hgrow="ALWAYS">
-                <Label fx:id="welcomeLabel" styleClass="title-text-large" text="Bonjour, Professeur"/>
-                <Label fx:id="dateLabel" styleClass="subtitle-text-muted" text="Date et Heure"/>
-            </VBox>
-            <Button fx:id="themeToggleBtn" text="🌗 Mode sombre" styleClass="btn-toggle-round" />
-            <Button text="Déconnexion" onAction="#handleLogout" styleClass="btn-logout"/>
+
+            <Label fx:id="topDateLabel" text="--/--/----" />
+            <Label text="/" />
+            <Label fx:id="topSubjectLabel" text="Matière" />
+
+            <Pane HBox.hgrow="ALWAYS" />
+            <Label text="☀" />
         </HBox>
     </top>
 
-    <center>
-        <VBox alignment="TOP_CENTER" spacing="30" styleClass="center-content">
+    <!-- LEFT SIDEBAR -->
+    <left>
+        <VBox spacing="20">
             <padding>
-                <Insets top="30" bottom="30" left="80" right="80"/>
+                <Insets top="20" right="20" bottom="20" left="20" />
             </padding>
 
-            <Label text="Prochaine Séance" styleClass="section-title"/>
+            <Label fx:id="welcomeLabel" text="Bonjour, Prof" />
+            <Separator />
 
-            <GridPane hgap="30" vgap="20" alignment="CENTER">
-                <columnConstraints>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" halignment="RIGHT"/>
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="300" halignment="LEFT"/>
-                </columnConstraints>
-
-                <Label text="Matière :" styleClass="detail-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                <Label fx:id="subjectLabel" styleClass="detail-value" text="Recherche de la prochaine séance..." GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-
-                <Label text="Date &amp; Heure :" styleClass="detail-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                <Label fx:id="sessionTimeLabel" styleClass="detail-value" text="N/A" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-
-                <Label text="Étudiants Inscrits :" styleClass="detail-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                <Label fx:id="studentCountLabel" styleClass="detail-value" text="0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-
-            </GridPane>
-
-            <VBox alignment="CENTER" spacing="10">
-                <Button fx:id="startBtn" styleClass="btn-start-session-large" text="Démarrer la séance" onAction="#handleStartSession"/>
-                <Label text="Lancez la session pour générer le code de présence." styleClass="subtitle-text-small"/>
+            <VBox spacing="10">
+                <Label text="Dashboard" />
+                <Button text="Accueil" maxWidth="Infinity" />
+                <Button text="Liste des étudiants" maxWidth="Infinity" />
+                <Button text="Mes matières" maxWidth="Infinity" />
             </VBox>
 
+            <Pane VBox.vgrow="ALWAYS" />
+
+            <Button fx:id="logoutButton"
+                    text="Déconnexion"
+                    onAction="#handleLogout"
+                    maxWidth="Infinity" />
+        </VBox>
+    </left>
+
+    <!-- CENTER : Liste des étudiants -->
+    <center>
+        <VBox spacing="15">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+
+            <Label text="Liste des étudiants" />
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                <content>
+                    <ListView fx:id="studentListView" />
+                </content>
+            </ScrollPane>
         </VBox>
     </center>
+
+    <!-- RIGHT : Code / QR / Validation -->
+    <right>
+        <VBox spacing="20">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+
+            <HBox spacing="10">
+                <Button fx:id="codeModeButton" text="CODE" onAction="#handleCodeMode" />
+                <Button fx:id="qrModeButton" text="CODE QR" onAction="#handleQrMode" />
+            </HBox>
+
+            <VBox spacing="10">
+                <Label text="Code de signature" />
+                <Label fx:id="codeValueLabel"
+                       text="----"
+                       style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+            </VBox>
+
+            <ImageView fx:id="qrImageView"
+                       fitWidth="200"
+                       fitHeight="200"
+                       preserveRatio="true"
+                       visible="false"
+                       managed="false" />
+
+            <!-- Removed "Generate Code" button -->
+
+            <Pane VBox.vgrow="ALWAYS" />
+
+            <Button fx:id="validateButton"
+                    text="VALIDER"
+                    onAction="#handleSaveAttendance"
+                    maxWidth="Infinity"
+                    prefHeight="40" />
+        </VBox>
+    </right>
 
 </BorderPane>

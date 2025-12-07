@@ -191,7 +191,6 @@ public class SessionController {
         statusSummaryLabel.setText(String.format("%d Présent / %d Absent / %d En attente", present, absent, pending));
     }
 
-
     @FXML
     private void handleSaveAndQuit() {
         if (currentSeance == null) return;
