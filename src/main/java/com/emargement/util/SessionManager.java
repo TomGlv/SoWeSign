@@ -1,43 +1,36 @@
-// Fichier : src/main/java/com/emargement/util/SessionManager.java
-
 package com.emargement.util;
 
-import com.emargement.model.Utilisateur;
+// Les imports peuvent varier, mais le type 'Object' est souvent utilisé pour stocker l'utilisateur générique
+// import com.emargement.model.Utilisateur; // Peut être nécessaire si vous utilisez des types spécifiques ailleurs
 
-/**
- * Gère la session utilisateur actuelle de l'application.
- */
 public class SessionManager {
 
-    private static Utilisateur currentUser;
+    // Stocke l'utilisateur actuellement connecté (peut être Etudiant ou Professeur)
+    private static Object currentUser = null;
 
     /**
-     * Définit l'utilisateur actuellement connecté.
-     * @param user L'utilisateur après une authentification réussie.
+     * Retourne l'utilisateur actuellement connecté.
      */
-    public static void setCurrentUser(Utilisateur user) {
-        currentUser = user;
-    }
-
-    /**
-     * Récupère l'utilisateur actuellement connecté.
-     * @return L'objet Utilisateur, ou null si personne n'est connecté.
-     */
-    public static Utilisateur getCurrentUser() {
+    public static Object getCurrentUser() {
         return currentUser;
     }
 
     /**
-     * Vérifie si un utilisateur est connecté.
+     * Définit l'utilisateur courant après une connexion réussie.
      */
-    public static boolean isLoggedIn() {
-        return currentUser != null;
+    public static void setCurrentUser(Object user) {
+        currentUser = user;
     }
 
     /**
-     * Déconnecte l'utilisateur.
+     * ⭐️ CORRECTION : Ajoute la méthode clearSession pour déconnecter l'utilisateur.
      */
-    public static void cleanSession() {
+    public static void clearSession() {
         currentUser = null;
+    }
+
+    // Vous pouvez ajouter d'autres méthodes pour vérifier l'état de la session si nécessaire
+    public static boolean isLoggedIn() {
+        return currentUser != null;
     }
 }

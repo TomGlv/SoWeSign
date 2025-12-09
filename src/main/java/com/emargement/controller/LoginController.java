@@ -1,9 +1,12 @@
 package com.emargement.controller;
 
 import com.emargement.App;
+import com.emargement.dao.EtudiantDAO;
+import com.emargement.model.Etudiant;
+import com.emargement.model.Role;
 import com.emargement.model.Utilisateur;
 import com.emargement.service.AuthService;
-import com.emargement.session.UserSession; // ⭐️ Import pour la gestion de session
+import com.emargement.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -21,35 +24,49 @@ public class LoginController {
     private PasswordField passwordField;
 
     @FXML
-    private Label messageLabel;
+    private Label messageLabel; // ⭐️ Ceci était null lors du crash
 
     private final AuthService authService = new AuthService();
+    private final EtudiantDAO etudiantDAO = new EtudiantDAO();
 
-    /**
-     * Tente d'authentifier l'utilisateur et le redirige selon son rôle.
-     */
     @FXML
     private void handleLoginButtonAction() {
         String login = loginField.getText();
         String password = passwordField.getText();
 
-        // 1. Authentification
         Optional<Utilisateur> userOpt = authService.authenticate(login, password);
 
         if (userOpt.isPresent()) {
             Utilisateur user = userOpt.get();
+            Object sessionObject = user;
 
-            // 2. ENREGISTREMENT DE LA SESSION
-            UserSession.getInstance().setUtilisateur(user);
+            switch (user.getRole()) {
+                case ETUDIANT:
+                    Optional<Etudiant> etudiantOpt = etudiantDAO.findByUtilisateurId(user.getId());
+                    if (etudiantOpt.isPresent()) {
+                        sessionObject = etudiantOpt.get();
+                    } else {
+                        messageLabel.setText("Erreur : Fiche étudiant introuvable.");
+                        messageLabel.setStyle("-fx-text-fill: red;");
+                        return;
+                    }
+                    break;
+                case PROFESSEUR:
+                    sessionObject = user;
+                    break;
+                default:
+                    break;
+            }
+
+            SessionManager.setCurrentUser(sessionObject);
 
             try {
-                // 3. LOGIQUE DE REDIRECTION BASÉE SUR LE RÔLE
                 switch (user.getRole()) {
                     case ADMIN:
                         App.setRoot("DashboardAdmin");
                         break;
                     case PROFESSEUR:
-                        App.setRoot("DashboardProfesseur");
+                        App.setRoot("DashboardProfesseur"); // ⭐️ Ligne où l'erreur FXML est levée
                         break;
                     case ETUDIANT:
                         App.setRoot("DashboardEtudiant");
@@ -59,17 +76,23 @@ public class LoginController {
                         messageLabel.setStyle("-fx-text-fill: red;");
                 }
             } catch (IOException e) {
-                // Gestion de l'erreur si le fichier FXML n'est pas trouvé
+                // ⭐️ CORRECTION CRITIQUE : Capture l'erreur de chargement FXML
                 System.err.println("Erreur de chargement du dashboard pour le rôle " + user.getRole());
                 e.printStackTrace();
-                messageLabel.setText("Erreur interne : Impossible de charger la vue.");
-                messageLabel.setStyle("-fx-text-fill: red;");
+
+                // Afficher le message d'erreur SANS faire planter JavaFX (car messageLabel n'est pas null ici)
+                if (messageLabel != null) {
+                    messageLabel.setText("Erreur interne : Impossible de charger la vue du Tableau de Bord (Erreur FXML).");
+                    messageLabel.setStyle("-fx-text-fill: red;");
+                }
             }
 
         } else {
-            // 4. Échec de l'authentification
-            messageLabel.setText("Login ou mot de passe incorrect.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            // Afficher le message d'erreur si la connexion échoue
+            if (messageLabel != null) {
+                messageLabel.setText("Login ou mot de passe incorrect.");
+                messageLabel.setStyle("-fx-text-fill: red;");
+            }
         }
     }
 }

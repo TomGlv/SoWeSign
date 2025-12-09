@@ -1,62 +1,84 @@
 package com.emargement.controller;
 
 import com.emargement.App;
+import com.emargement.model.Etudiant;
 import com.emargement.service.EmargementService;
-import com.emargement.session.UserSession;
-import com.emargement.model.Utilisateur;
-
+import com.emargement.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-
 import java.io.IOException;
 
 public class DashboardEtudiantController {
 
-    @FXML private Label welcomeLabel;
-    @FXML private TextField codeInputField;
-    @FXML private Label messageLabel;
+    // Éléments FXML
+    @FXML
+    private TextField codeInputField;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label welcomeLabel;
 
     private final EmargementService emargementService = new EmargementService();
-    private Utilisateur utilisateur;
 
     @FXML
     public void initialize() {
-        utilisateur = UserSession.getInstance().getUtilisateur();
-        String nom = utilisateur.getPrenom() + " " + utilisateur.getNom();
-        welcomeLabel.setText("Bienvenue, Étudiant " + nom + " !");
+        Object currentUser = SessionManager.getCurrentUser();
+
+        // ⭐️ VÉRIFICATION ROBUSTE AU DÉMARRAGE ⭐️
+        if (currentUser instanceof Etudiant) {
+            Etudiant etudiant = (Etudiant) currentUser;
+            welcomeLabel.setText("Bienvenue, Étudiant " + etudiant.getUtilisateur().getPrenom() + " " + etudiant.getUtilisateur().getNom());
+        } else {
+            // Cas où la session est corrompue ou vide. Rediriger pour éviter les erreurs.
+            System.err.println("Erreur: SessionManager contient un objet non-Etudiant ou est vide lors de l'initialisation.");
+            try {
+                // Tenter la déconnexion et le retour à l'écran de login
+                handleLogout();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
+    /**
+     * Gère l'action du bouton "Émarger".
+     */
     @FXML
-    private void handleEmarger() {
-        String code = codeInputField.getText().trim().toUpperCase();
+    private void handleEmargerAction() {
+        String code = codeInputField.getText();
+        Object currentUser = SessionManager.getCurrentUser();
 
-        if (code.isEmpty()) {
-            messageLabel.setText("Veuillez entrer un code.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+        // ⭐️ VÉRIFICATION ROBUSTE LORS DE L'ÉMARGEMENT ⭐️
+        if (currentUser == null || !(currentUser instanceof Etudiant)) {
+            statusLabel.setText("Statut : Erreur de session. Veuillez vous reconnecter.");
             return;
         }
 
-        // ⭐️ Utilisation du service d'émargement
-        boolean success = emargementService.emarger(code, utilisateur);
+        Etudiant etudiant = (Etudiant) currentUser; // Le casting est maintenant sûr.
 
-        if (success) {
-            messageLabel.setText("Présence enregistrée pour le cours correspondant !");
-            messageLabel.setStyle("-fx-text-fill: green;");
-            codeInputField.clear();
-        } else {
-            messageLabel.setText("Échec : Code invalide, expiré ou vous avez déjà émargé.");
-            messageLabel.setStyle("-fx-text-fill: red;");
+        if (code.isEmpty()) {
+            statusLabel.setText("Statut : Veuillez entrer le code d'émargement.");
+            return;
         }
+
+        // Appel au service pour traiter l'émargement
+        String resultat = emargementService.emarger(etudiant, code);
+
+        // Mise à jour de l'étiquette de statut avec le résultat
+        statusLabel.setText("Statut : " + resultat);
+
+        // Effacer le champ après l'essai
+        codeInputField.clear();
     }
 
+    /**
+     * Gère l'action de déconnexion.
+     */
     @FXML
-    private void handleLogout() {
-        UserSession.getInstance().clearSession();
-        try {
-            App.setRoot("Login");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void handleLogout() throws IOException {
+        SessionManager.clearSession();
+        // Retour à la page de Login
+        App.setRoot("Login");
     }
 }

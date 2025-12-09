@@ -1,52 +1,104 @@
 package com.emargement.model;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class Seance {
     private int id;
     private int coursId;
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
-    private String codeEmargement; // Code unique pour l'émargement en ligne
+    private String salle; // ⭐️ Champ manquant ajouté
+    private String codeEmargement;
     private LocalDateTime codeEmargementExpire;
-    private String nomCours; // Pour l'affichage
 
-    public Seance() {}
+    // Constructeur par défaut
+    public Seance() {
+    }
 
-    // Getters
-    public int getId() { return id; }
-    public int getCoursId() { return coursId; }
-    public LocalDateTime getDateDebut() { return dateDebut; }
-    public LocalDateTime getDateFin() { return dateFin; }
-    public String getCodeEmargement() { return codeEmargement; }
-    public LocalDateTime getCodeEmargementExpire() { return codeEmargementExpire; }
-    public String getNomCours() { return nomCours; }
+    // Constructeur complet (optionnel, mais pratique)
+    public Seance(int id, int coursId, LocalDateTime dateDebut, LocalDateTime dateFin, String salle, String codeEmargement, LocalDateTime codeEmargementExpire) {
+        this.id = id;
+        this.coursId = coursId;
+        this.dateDebut = dateDebut;
+        this.dateFin = dateFin;
+        this.salle = salle;
+        this.codeEmargement = codeEmargement;
+        this.codeEmargementExpire = codeEmargementExpire;
+    }
 
-    // Setters
-    public void setId(int id) { this.id = id; }
-    public void setCoursId(int coursId) { this.coursId = coursId; }
-    public void setDateDebut(LocalDateTime dateDebut) { this.dateDebut = dateDebut; }
-    public void setDateFin(LocalDateTime dateFin) { this.dateFin = dateFin; }
-    public void setCodeEmargement(String codeEmargement) { this.codeEmargement = codeEmargement; }
-    public void setCodeEmargementExpire(LocalDateTime codeEmargementExpire) { this.codeEmargementExpire = codeEmargementExpire; }
-    public void setNomCours(String nomCours) { this.nomCours = nomCours; }
+    // --- Getters and Setters ---
 
-    /**
-     * ⭐️ CORRECTION : Redéfinit toString() pour un affichage lisible dans la ListView.
-     * Ex: "Séance du cours 'Java Avancé' - 04/12/2025 à 14:00"
-     */
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getCoursId() {
+        return coursId;
+    }
+
+    public void setCoursId(int coursId) {
+        this.coursId = coursId;
+    }
+
+    public LocalDateTime getDateDebut() {
+        return dateDebut;
+    }
+
+    public void setDateDebut(LocalDateTime dateDebut) {
+        this.dateDebut = dateDebut;
+    }
+
+    public LocalDateTime getDateFin() {
+        return dateFin;
+    }
+
+    public void setDateFin(LocalDateTime dateFin) {
+        this.dateFin = dateFin;
+    }
+
+    // ⭐️ Getter de salle ajouté
+    public String getSalle() {
+        return salle;
+    }
+
+    // ⭐️ Setter de salle ajouté
+    public void setSalle(String salle) {
+        this.salle = salle;
+    }
+
+    public String getCodeEmargement() {
+        return codeEmargement;
+    }
+
+    public void setCodeEmargement(String codeEmargement) {
+        this.codeEmargement = codeEmargement;
+    }
+
+    public LocalDateTime getCodeEmargementExpire() {
+        return codeEmargementExpire;
+    }
+
+    public void setCodeEmargementExpire(LocalDateTime codeEmargementExpire) {
+        this.codeEmargementExpire = codeEmargementExpire;
+    }
+
+    // --- Override méthodes pour la comparaison (si nécessaire) ---
+
     @Override
-    public String toString() {
-        if (dateDebut == null) return "Séance non datée";
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Seance seance = (Seance) o;
+        return id == seance.id;
+    }
 
-        // Utilise un formateur pour une date et heure complète et lisible
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm");
-        String formattedDate = dateDebut.format(formatter);
-
-        // Assurez-vous d'avoir le nom du cours
-        String coursName = (nomCours != null) ? nomCours : "Cours Inconnu";
-
-        return "Séance du cours '" + coursName + "' - " + formattedDate;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

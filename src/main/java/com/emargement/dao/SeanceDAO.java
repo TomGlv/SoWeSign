@@ -1,102 +1,156 @@
 package com.emargement.dao;
 
 import com.emargement.model.Seance;
+import com.emargement.dao.DatabaseConnection;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public class SeanceDAO {
 
+    /**
+     * Helper pour obtenir l'heure de début/fin en tant que Timestamp concaténé.
+     * La DB stocke date et heure séparément (dateSeance, heureDebut/Fin).
+     * Nous devons les CONCATENER en SQL pour les lire en tant que LocalDateTime en Java.
+     */
+    private static final String SEANCE_FIELDS =
+            "id, coursId, salle, codeEmargement, codeEmargementExpire, " +
+                    "CONCAT(dateSeance, ' ', heureDebut) AS dateHeureDebut, " +
+                    "CONCAT(dateSeance, ' ', heureFin) AS dateHeureFin ";
+
+    /**
+     * Récupère toutes les séances associées à un cours spécifique.
+     */
     public List<Seance> findByCoursId(int coursId) {
-        List<Seance> seanceList = new ArrayList<>();
-        // ⭐️ CORRECTION : Utilisation de CONCAT pour combiner la date et l'heure en un DATETIME complet.
-        // On sélectionne également explicitement codeEmargementExpire (le nouveau nom de colonne).
-        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
-                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
-                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
-                "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.coursId = ?";
+        List<Seance> seances = new ArrayList<>();
+        // Utilisation de l'alias de concaténation pour les dates/heures
+        String sql = "SELECT " + SEANCE_FIELDS +
+                "FROM seance WHERE coursId = ? ORDER BY dateSeance, heureDebut ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, coursId);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    seanceList.add(mapResultSetToSeance(rs));
+                    Seance seance = new Seance();
+                    seance.setId(rs.getInt("id"));
+                    seance.setCoursId(rs.getInt("coursId"));
+
+                    // Lecture des alias concaténés
+                    seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
+                    seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
+
+                    seance.setSalle(rs.getString("salle"));
+                    // Lecture des noms de colonnes réels
+                    seance.setCodeEmargement(rs.getString("codeEmargement"));
+
+                    Timestamp tsExpire = rs.getTimestamp("codeEmargementExpire");
+                    if (tsExpire != null) {
+                        seance.setCodeEmargementExpire(tsExpire.toLocalDateTime());
+                    }
+                    seances.add(seance);
                 }
             }
         } catch (SQLException e) {
+            // L'erreur ne devrait plus apparaître ici
             System.err.println("Erreur SQL dans SeanceDAO.findByCoursId : " + e.getMessage());
         }
-        return seanceList;
+        return seances;
     }
 
-    public Optional<Seance> findByCodeEmargement(String code) {
-        // ⭐️ CORRECTION : Utilisation de CONCAT pour la création des colonnes dateDebut/dateFin.
-        String sql = "SELECT s.id, s.coursId, s.codeEmargement, s.codeEmargementExpire, c.nomCours, " +
-                "CONCAT(s.dateSeance, ' ', s.heureDebut) AS dateDebut, " +
-                "CONCAT(s.dateSeance, ' ', s.heureFin) AS dateFin " +
-                "FROM seance s JOIN cours c ON s.coursId = c.id WHERE s.codeEmargement = ?";
+    /**
+     * Récupère une séance par son identifiant unique. (Pour handleActualiser)
+     */
+    public Optional<Seance> findById(int seanceId) {
+        String sql = "SELECT " + SEANCE_FIELDS + "FROM seance WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, code);
+            stmt.setInt(1, seanceId);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapResultSetToSeance(rs));
+                    Seance seance = new Seance();
+                    seance.setId(rs.getInt("id"));
+                    seance.setCoursId(rs.getInt("coursId"));
+
+                    // Lecture des alias concaténés
+                    seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
+                    seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
+
+                    seance.setSalle(rs.getString("salle"));
+                    seance.setCodeEmargement(rs.getString("codeEmargement"));
+
+                    Timestamp tsExpire = rs.getTimestamp("codeEmargementExpire");
+                    if (tsExpire != null) {
+                        seance.setCodeEmargementExpire(tsExpire.toLocalDateTime());
+                    }
+
+                    return Optional.of(seance);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur SQL dans SeanceDAO.findByCodeEmargement : " + e.getMessage());
+            System.err.println("Erreur SQL dans SeanceDAO.findById : " + e.getMessage());
         }
         return Optional.empty();
     }
 
+    /**
+     * Met à jour le code d'émargement et son temps d'expiration pour une séance.
+     */
     public void updateCodeEmargement(int seanceId, String code, LocalDateTime expiration) throws SQLException {
-        // ⭐️ CORRECTION : La colonne est maintenant 'codeEmargementExpire' (suite à la mise à jour DB).
         String sql = "UPDATE seance SET codeEmargement = ?, codeEmargementExpire = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, code);
-            stmt.setTimestamp(2, expiration != null ? Timestamp.valueOf(expiration) : null);
+            stmt.setTimestamp(2, Timestamp.valueOf(expiration));
             stmt.setInt(3, seanceId);
 
             stmt.executeUpdate();
         }
     }
 
-    private Seance mapResultSetToSeance(ResultSet rs) throws SQLException {
-        Seance seance = new Seance();
-        seance.setId(rs.getInt("id"));
-        seance.setCoursId(rs.getInt("coursId"));
+    /**
+     * Récupère une séance en utilisant son code d'émargement unique.
+     */
+    public Optional<Seance> findByCodeEmargement(String code) {
+        String sql = "SELECT " + SEANCE_FIELDS + "FROM seance WHERE codeEmargement = ?";
 
-        // ⭐️ CORRECTION : Utilisation des alias 'dateDebut' et 'dateFin' créés dans la requête SQL.
-        Timestamp debutTimestamp = rs.getTimestamp("dateDebut");
-        if (debutTimestamp != null) {
-            seance.setDateDebut(debutTimestamp.toLocalDateTime());
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, code);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Seance seance = new Seance();
+                    seance.setId(rs.getInt("id"));
+                    seance.setCoursId(rs.getInt("coursId"));
+
+                    // Lecture des alias concaténés
+                    seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
+                    seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
+
+                    seance.setSalle(rs.getString("salle"));
+                    seance.setCodeEmargement(rs.getString("codeEmargement"));
+
+                    Timestamp tsExpire = rs.getTimestamp("codeEmargementExpire");
+                    if (tsExpire != null) {
+                        seance.setCodeEmargementExpire(tsExpire.toLocalDateTime());
+                    }
+                    return Optional.of(seance);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur SQL dans SeanceDAO.findByCodeEmargement : " + e.getMessage());
         }
-
-        Timestamp finTimestamp = rs.getTimestamp("dateFin");
-        if (finTimestamp != null) {
-            seance.setDateFin(finTimestamp.toLocalDateTime());
-        }
-
-        seance.setCodeEmargement(rs.getString("codeEmargement"));
-
-        // ⭐️ CORRECTION : Utilisation du nom de colonne correct.
-        Timestamp expireTimestamp = rs.getTimestamp("codeEmargementExpire");
-        seance.setCodeEmargementExpire(expireTimestamp != null ? expireTimestamp.toLocalDateTime() : null);
-
-        try {
-            seance.setNomCours(rs.getString("nomCours"));
-        } catch (SQLException ignore) {
-            // nomCours n'est pas toujours dans le ResultSet
-        }
-        return seance;
+        return Optional.empty();
     }
 }
