@@ -4,7 +4,6 @@ import com.emargement.model.Etudiant;
 import com.emargement.model.Utilisateur;
 import com.emargement.model.Role;
 
-// NOUVEL IMPORT : La classe EtudiantPresence est une classe interne du contrôleur
 import com.emargement.controller.DashboardProfesseurController.EtudiantPresence;
 
 import com.emargement.dao.DatabaseConnection;
@@ -15,9 +14,6 @@ import java.util.Optional;
 
 public class EtudiantDAO {
 
-    /**
-     * Récupère un étudiant par l'ID de son utilisateur.
-     */
     public Optional<Etudiant> findByUtilisateurId(int utilisateurId) {
         String sql = "SELECT e.id AS etudiantId, e.numeroEtudiant, u.* " +
                 "FROM etudiant e " +
@@ -54,9 +50,6 @@ public class EtudiantDAO {
         return Optional.ofNullable(etudiant);
     }
 
-    /**
-     * Récupère la liste des étudiants inscrits à un cours spécifique.
-     */
     public List<Etudiant> findByCoursId(int coursId) {
         List<Etudiant> etudiants = new ArrayList<>();
 
@@ -96,9 +89,6 @@ public class EtudiantDAO {
         return etudiants;
     }
 
-    /**
-     * Récupère les étudiants inscrits au cours de la séance, avec leur statut de présence en temps réel.
-     */
     public List<EtudiantPresence> findEtudiantsPresenceForSeance(int seanceId, int coursId) {
         List<EtudiantPresence> etudiantsPresence = new ArrayList<>();
 

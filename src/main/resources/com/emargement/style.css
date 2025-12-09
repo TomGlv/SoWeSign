@@ -93,6 +93,49 @@
     -fx-background-insets: 0, 0 0 1 0;
 }
 
+/* ------------------------------------------- */
+/* ⭐️ STYLES AJOUTÉS POUR LA GESTION DE PRÉSENCE ⭐️ */
+/* ------------------------------------------- */
+
+/* 1. Styles pour le texte dans la colonne Statut (colPresence) */
+.table-cell.presence-present {
+    -fx-text-fill: #2ecc71; /* Utilise le vert des boutons pour la cohérence */
+    -fx-font-weight: bold;
+}
+
+.table-cell.presence-absent {
+    -fx-text-fill: #e74c3c; /* Utilise le rouge des boutons pour la cohérence */
+    -fx-font-weight: bold;
+}
+
+/* 2. Styles pour la LIGNE ENTIÈRE (RowFactory) lors du clic */
+/* Utilise des couleurs claires pour contraster avec le thème sombre */
+.table-row-cell.presence-present-row {
+    -fx-background-color: #2ecc7155; /* Vert semi-transparent */
+    -fx-background-insets: 0, 0 0 1 0;
+}
+
+.table-row-cell.presence-absent-row {
+    -fx-background-color: #e74c3c55; /* Rouge semi-transparent */
+    -fx-background-insets: 0, 0 0 1 0;
+}
+
+/* Gérer la sélection pour qu'elle ne casse pas la couleur de présence */
+.table-row-cell:selected {
+    -fx-background-color: #1abc9c; /* Conserve le turquoise de sélection */
+}
+
+/* La ligne sélectionnée mais aussi "Présente" ou "Absente" */
+.table-row-cell:selected.presence-present-row {
+    -fx-background-color: #2ecc7180; /* Vert un peu plus opaque si sélectionné */
+}
+
+.table-row-cell:selected.presence-absent-row {
+    -fx-background-color: #e74c3c80; /* Rouge un peu plus opaque si sélectionné */
+}
+
+/* ------------------------------------------- */
+
 .table-row-cell:selected {
     -fx-background-color: #1abc9c;
 }

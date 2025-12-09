@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane styleClass="root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.emargement.controller.DashboardProfesseurController">
+<AnchorPane styleClass="root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.emargement.controller.DashboardProfesseurController">
     <children>
         <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
@@ -102,7 +102,6 @@
                                     <TableColumn fx:id="colNom" prefWidth="200.0" text="Nom Complet" />
                                     <TableColumn fx:id="colNumero" prefWidth="150.0" text="N° Étudiant" />
                                     <TableColumn fx:id="colPresence" prefWidth="150.0" text="Statut Emargement" />
-                                    <TableColumn fx:id="colEditPresence" prefWidth="100.0" text="Modifier" />
                                 </columns>
                                 <columnResizePolicy>
                                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
