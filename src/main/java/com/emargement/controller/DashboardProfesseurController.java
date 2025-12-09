@@ -16,16 +16,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.util.Callback;
-import javafx.beans.value.ObservableValue;
-import javafx.beans.property.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.time.LocalDateTime;
+import javafx.beans.property.*;
 
 public class DashboardProfesseurController implements Initializable {
 
@@ -39,7 +36,7 @@ public class DashboardProfesseurController implements Initializable {
     @FXML private TableColumn<EtudiantPresence, String> colNom;
     @FXML private TableColumn<EtudiantPresence, String> colNumero;
     @FXML private TableColumn<EtudiantPresence, String> colPresence;
-    @FXML private TableColumn<EtudiantPresence, Boolean> colEditPresence;
+    // La déclaration @FXML pour colEditPresence a été retirée.
     @FXML private Button generateCodeButton;
 
     // --- Déclarations DAO et Services ---
@@ -47,7 +44,6 @@ public class DashboardProfesseurController implements Initializable {
     private final SeanceDAO seanceDAO = new SeanceDAO();
     private final EtudiantDAO etudiantDAO = new EtudiantDAO();
     private final EmargementService emargementService = new EmargementService();
-    private final EmargementDAO emargementDAO = new EmargementDAO();
 
     // --- Variables d'État ---
     private Utilisateur utilisateurConnecte;
@@ -80,7 +76,7 @@ public class DashboardProfesseurController implements Initializable {
         }
     }
 
-    // --- Méthodes de chargement ---
+    // --- Méthodes de chargement (Inchangées) ---
     private void loadCours() {
         if (this.utilisateurConnecte != null) {
             List<Cours> coursList = coursDAO.findByProfesseurId(this.utilisateurConnecte.getId());
@@ -101,9 +97,7 @@ public class DashboardProfesseurController implements Initializable {
             etudiantTableView.setItems(etudiantsData);
         }
 
-        // FIX : Vider la liste avant de recharger pour éviter les artefacts d'affichage (alternance)
         etudiantsData.clear();
-
         etudiantsData.setAll(presenceList);
     }
 
@@ -151,77 +145,84 @@ public class DashboardProfesseurController implements Initializable {
     }
 
 
-    // --- Configuration du Tableau (Logique de CheckBox Finalisée) ---
+    // --- Configuration du Tableau (Logique de Clic sur la Ligne) ---
     private void setupTableView() {
 
         colNom.setCellValueFactory(new PropertyValueFactory<>("nomComplet"));
         colNumero.setCellValueFactory(new PropertyValueFactory<>("numeroEtudiant"));
-
-        // 1. Colonne Statut Texte
         colPresence.setCellValueFactory(new PropertyValueFactory<>("statutPresence"));
+
+        // 1. Mise en place des styles de ligne et de cellule
         colPresence.setCellFactory(column -> new TableCell<EtudiantPresence, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
+
+                getStyleClass().removeAll("presence-present", "presence-absent");
+                TableRow<EtudiantPresence> row = getTableRow();
+                if (row != null) {
+                    row.getStyleClass().removeAll("presence-present-row", "presence-absent-row");
+                }
+
                 if (empty || item == null) {
                     setText(null);
-                    setGraphic(null);
                 } else {
                     setText(item);
-                    getStyleClass().removeAll("presence-present", "presence-absent");
-                    getStyleClass().add(item.equals("Présent") ? "presence-present" : "presence-absent");
+
+                    boolean isPresent = item.equals("Présent");
+
+                    String rowStyle = isPresent ? "presence-present-row" : "presence-absent-row";
+                    String cellStyle = isPresent ? "presence-present" : "presence-absent";
+
+                    getStyleClass().add(cellStyle);
+
+                    if (row != null) {
+                        row.getStyleClass().add(rowStyle);
+                    }
                 }
             }
         });
 
-        // 2. Colonne d'Édition CheckBox
-        etudiantTableView.setEditable(true);
-        colEditPresence.setEditable(true);
-        colEditPresence.setCellValueFactory(new PropertyValueFactory<>("estPresent"));
+        // 2. LOGIQUE CLÉ : RowFactory pour la gestion du clic
+        etudiantTableView.setRowFactory(tv -> {
+            TableRow<EtudiantPresence> row = new TableRow<>();
 
-        // LOGIQUE CLÉ : Interception du clic, validation DB et mise à jour du modèle
-        Callback<Integer, ObservableValue<Boolean>> dbCommitCallback = (param -> {
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 1 && !row.isEmpty()) {
 
-            final EtudiantPresence etudiant = etudiantTableView.getItems().get(param);
-            // On calcule le nouvel état cible
-            final Boolean nouvelEtat = !etudiant.isEstPresent();
+                    EtudiantPresence etudiant = row.getItem();
+                    Boolean nouvelEtat = !etudiant.isEstPresent();
 
-            if (seanceSelectionnee == null || seanceSelectionnee.getId() <= 0) {
-                System.err.println("ERREUR CRITIQUE: Veuillez sélectionner une séance valide.");
-                return etudiant.estPresentProperty();
-            }
+                    if (seanceSelectionnee == null || seanceSelectionnee.getId() <= 0) {
+                        System.err.println("ERREUR CRITIQUE: Veuillez sélectionner une séance valide.");
+                        return;
+                    }
 
-            // APPEL DU DAO (Sauvegarde/Suppression)
-            boolean success = emargementDAO.saveOrDeleteAttendance(
-                    seanceSelectionnee.getId(),
-                    etudiant.getEtudiantId(),
-                    nouvelEtat
-            );
+                    // --- APPEL DU DAO ---
+                    EmargementDAO emargementDAO = new EmargementDAO();
+                    boolean success = emargementDAO.saveOrDeleteAttendance(
+                            seanceSelectionnee.getId(),
+                            etudiant.getEtudiantId(),
+                            nouvelEtat
+                    );
 
-            if (success) {
-                // Écriture réussie : on met à jour le modèle JavaFX
-                System.out.println("Présence de " + etudiant.getNomComplet() + " mise à jour en DB: " + (nouvelEtat ? "Présent" : "Absent"));
+                    if (success) {
+                        System.out.println("Présence de " + etudiant.getNomComplet() + " mise à jour en DB par clic: " + (nouvelEtat ? "Présent" : "Absent"));
 
-                etudiant.setEstPresent(nouvelEtat);
-                // FIX INVERSION : Assurez-vous que le statut textuel suit l'état de la CheckBox
-                etudiant.setStatutPresence(nouvelEtat ? "Présent" : "Absent");
+                        etudiant.setEstPresent(nouvelEtat);
+                        etudiant.setStatutPresence(nouvelEtat ? "Présent" : "Absent");
 
-                // FIX CHECKBOX BLOQUÉE : On remet le refresh.
-                // Les appels de focus (edit(-1, null)) qui bloquaient sont retirés.
-                etudiantTableView.refresh();
+                        etudiantTableView.refresh();
 
-            } else {
-                // Échec du DAO : La CheckBox reviendra à l'état initial.
-                System.err.println("ÉCHEC CRITIQUE: L'écriture en base de données a échoué. Le changement est ignoré.");
-
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Échec de l'enregistrement en base de données.", ButtonType.OK);
-                alert.showAndWait();
-            }
-
-            return etudiant.estPresentProperty();
+                    } else {
+                        System.err.println("ÉCHEC CRITIQUE: L'écriture en base de données a échoué.");
+                        Alert alert = new Alert(Alert.AlertType.ERROR, "Échec de l'enregistrement en base de données.", ButtonType.OK);
+                        alert.showAndWait();
+                    }
+                }
+            });
+            return row;
         });
-
-        colEditPresence.setCellFactory(CheckBoxTableCell.forTableColumn(dbCommitCallback));
 
         etudiantsData = FXCollections.observableArrayList();
         etudiantTableView.setItems(etudiantsData);
@@ -278,8 +279,6 @@ public class DashboardProfesseurController implements Initializable {
             alert.showAndWait();
             return;
         }
-
-        // Le bouton sert d'actualisation propre de la liste.
         loadEtudiantsPresence(seanceSelectionnee);
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Liste de présence actualisée.", ButtonType.OK);
         alert.showAndWait();
@@ -308,12 +307,7 @@ public class DashboardProfesseurController implements Initializable {
             this.numeroEtudiant = new SimpleStringProperty(numeroEtudiant);
             this.estPresent = new SimpleBooleanProperty(present);
             this.statutPresence = new SimpleStringProperty(present ? "Présent" : "Absent");
-
-            // FIX INVERSION : L'écouteur de propriété est supprimé. La mise à jour est effectuée
-            // directement dans le contrôleur après la confirmation DB.
         }
-
-        // --- Getters et Setters ---
 
         public int getEtudiantId() { return etudiantId.get(); }
         public String getNomComplet() { return nomComplet.get(); }
