@@ -13,22 +13,29 @@ public class App extends Application {
     private static Scene scene;
     private static Stage primaryStage; // Référence à la scène principale
 
-    // Constantes de taille
+    // Constantes de taille initiale minimale (pour le démarrage avant la maximisation)
     private static final int LOGIN_WIDTH = 800;
     private static final int LOGIN_HEIGHT = 600;
-    private static final int DASHBOARD_WIDTH = 1100; // Augmenté pour un look pro
-    private static final int DASHBOARD_HEIGHT = 700; // Grande hauteur
+
+    // NOTE : Les constantes DASHBOARD_WIDTH/HEIGHT sont inutiles en mode maximisé.
 
     @Override
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
+
         // Charge la vue de connexion au démarrage
         Parent root = loadFXML("Login");
-        scene = new Scene(root, LOGIN_WIDTH, LOGIN_HEIGHT);
+        scene = new Scene(root, LOGIN_WIDTH, LOGIN_HEIGHT); // Taille initiale
 
-        // ⭐️ IMPORTANT : Ajout du chargement du CSS pour l'écran de connexion
-        // Utile si vous voulez styliser l'écran de Login plus tard.
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        // ⭐️ IMPORTANT : Maximiser la fenêtre de Login au lancement ⭐️
+        stage.setMaximized(true);
+
+        // Ajout du chargement du CSS
+        try {
+            scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        } catch (NullPointerException e) {
+            System.err.println("Avertissement: style.css non trouvé. Assurez-vous qu'il est dans le classpath.");
+        }
 
         stage.setScene(scene);
         stage.setTitle("SoWeSign - Connexion");
@@ -42,30 +49,39 @@ public class App extends Application {
     public static void setRoot(String fxml) throws IOException {
         Parent root = loadFXML(fxml);
 
-        // ⭐️ ÉTAPE CLÉ : Réappliquer le CSS au moment du changement de vue
-        // Cela garantit que le nouveau FXML (ex: DashboardProfesseur) utilise le style.
-        scene.getStylesheets().clear(); // Nettoyer les styles précédents (si besoin)
-        scene.getStylesheets().add(App.class.getResource("style.css").toExternalForm());
+        // Réappliquer le CSS au moment du changement de vue
+        scene.getStylesheets().clear();
+        try {
+            scene.getStylesheets().add(App.class.getResource("style.css").toExternalForm());
+        } catch (NullPointerException e) {
+            System.err.println("Avertissement: style.css non trouvé lors du changement de vue.");
+        }
 
         scene.setRoot(root);
 
-        // ⭐️ Gestion des grandes tailles pour le Dashboard
+        // ⭐️ Si on passe au Dashboard, on s'assure que la fenêtre reste maximisée.
+        // Si on revient au Login, on pourrait vouloir la laisser maximisée ou la redimensionner
+        // Ici, on maintient l'état maximisé pour les deux types de vue, ce qui est cohérent.
+
         if (fxml.startsWith("Dashboard")) {
-            primaryStage.setWidth(DASHBOARD_WIDTH);
-            primaryStage.setHeight(DASHBOARD_HEIGHT);
             primaryStage.setTitle("SoWeSign - Tableau de Bord");
         } else {
-            // Revenir à la taille initiale pour le login/autres
-            primaryStage.setWidth(LOGIN_WIDTH);
-            primaryStage.setHeight(LOGIN_HEIGHT);
             primaryStage.setTitle("SoWeSign - Connexion");
+            // Si vous souhaitez désactiver le mode maximisé pour le login:
+            // primaryStage.setMaximized(false);
+            // primaryStage.setWidth(LOGIN_WIDTH);
+            // primaryStage.setHeight(LOGIN_HEIGHT);
+            // primaryStage.sizeToScene(); // Optionnel si on définit la taille
         }
 
-        primaryStage.sizeToScene();
+        // Cette ligne est inutile si primaryStage.setMaximized(true) est utilisé.
+        // primaryStage.sizeToScene();
+
         primaryStage.centerOnScreen();
     }
 
     private static Parent loadFXML(String fxml) throws IOException {
+        // Utilisation de .getResource(fxml + ".fxml") au lieu de .getResource(fxml)
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
     }

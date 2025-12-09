@@ -1,0 +1,57 @@
+/* login-styles.css */
+
+/* ========================================================= */
+/* 1. STYLES RACINE (BACKGROUND IMAGE) */
+/* ========================================================= */
+#loginRoot {
+    /* Chemin de ressource vers l'image dans le classpath */
+    -fx-background-image: url("/com/emargement/login-bg.png");
+
+    /* Options d'affichage */
+    -fx-background-size: cover;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+
+    /* Couleur de secours */
+    -fx-background-color: #34495e;
+}
+
+/* ========================================================= */
+/* 2. STYLES DES ÉLÉMENTS DU FORMULAIRE */
+/* ========================================================= */
+
+.label-white {
+    -fx-text-fill: white;
+}
+
+/* Style des champs de saisie (TextField et PasswordField) */
+.text-field, .password-field {
+    -fx-background-color: white;
+    -fx-prompt-text-fill: #95a5a6;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1px;
+    -fx-padding: 8px 10px;
+}
+
+/* ========================================================= */
+/* 3. STYLES DES BOUTONS */
+/* ========================================================= */
+.button {
+    -fx-background-color: #2ecc71; /* Vert vif */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #27ae60; /* Vert légèrement plus foncé au survol */
+}
+
+/* Style spécifique au bouton de connexion */
+#generate-button {
+    -fx-font-size: 14px;
+}

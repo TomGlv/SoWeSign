@@ -12,11 +12,11 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="700.0" prefWidth="1000.0" styleClass="root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.emargement.controller.DashboardProfesseurController">
+<AnchorPane styleClass="root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.emargement.controller.DashboardProfesseurController">
     <children>
-        <VBox alignment="TOP_CENTER" prefHeight="700.0" prefWidth="1000.0">
+        <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="1000.0" styleClass="hbox-header">
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" styleClass="hbox-header">
                     <children>
                         <Label fx:id="welcomeLabel" text="Bienvenue, Professeur [Nom]" styleClass="label-white">
                             <font>
@@ -26,7 +26,7 @@
                                 <Insets left="20.0" />
                             </HBox.margin>
                         </Label>
-                        <HBox alignment="CENTER_RIGHT" prefHeight="70.0" prefWidth="760.0">
+                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
                                 <Button onAction="#handleLogout" styleClass="button" id="logout-button" text="Déconnexion">
                                     <HBox.margin>
@@ -38,9 +38,9 @@
                     </children>
                 </HBox>
 
-                <HBox prefHeight="630.0" prefWidth="1000.0">
+                <HBox VBox.vgrow="ALWAYS">
 
-                    <VBox prefHeight="630.0" prefWidth="250.0" spacing="10.0" styleClass="vbox-sidebar">
+                    <VBox prefWidth="250.0" spacing="10.0" styleClass="vbox-sidebar" VBox.vgrow="ALWAYS">
                         <padding>
                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                         </padding>
@@ -50,23 +50,23 @@
                                     <Font name="System Bold" size="14.0" />
                                 </font>
                             </Label>
-                            <ListView fx:id="coursListView" prefHeight="290.0" prefWidth="230.0" styleClass="list-view" />
+                            <ListView fx:id="coursListView" styleClass="list-view" VBox.vgrow="ALWAYS" />
                             <Separator prefWidth="200.0" style="-fx-background-color: #95a5a6;" />
                             <Label text="Séances du Cours Sélectionné" styleClass="label-white">
                                 <font>
                                     <Font name="System Bold" size="14.0" />
                                 </font>
                             </Label>
-                            <ListView fx:id="seanceListView" prefHeight="290.0" prefWidth="230.0" styleClass="list-view" />
+                            <ListView fx:id="seanceListView" styleClass="list-view" VBox.vgrow="ALWAYS" />
                         </children>
                     </VBox>
 
-                    <VBox alignment="TOP_CENTER" prefHeight="630.0" prefWidth="750.0" spacing="10.0">
+                    <VBox alignment="TOP_CENTER" spacing="10.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                         <padding>
                             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                         </padding>
                         <children>
-                            <HBox alignment="CENTER_LEFT" prefHeight="80.0" prefWidth="730.0" spacing="20.0" styleClass="hbox-details">
+                            <HBox alignment="CENTER_LEFT" prefHeight="80.0" spacing="20.0" styleClass="hbox-details">
                                 <children>
                                     <VBox prefHeight="60.0" prefWidth="320.0">
                                         <children>
@@ -97,7 +97,7 @@
                                 </font>
                             </Label>
 
-                            <TableView fx:id="etudiantTableView" prefHeight="510.0" prefWidth="730.0" styleClass="table-view">
+                            <TableView fx:id="etudiantTableView" styleClass="table-view" VBox.vgrow="ALWAYS">
                                 <columns>
                                     <TableColumn fx:id="colNom" prefWidth="200.0" text="Nom Complet" />
                                     <TableColumn fx:id="colNumero" prefWidth="150.0" text="N° Étudiant" />

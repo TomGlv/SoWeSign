@@ -3,7 +3,10 @@ package com.emargement.dao;
 import com.emargement.model.Etudiant;
 import com.emargement.model.Utilisateur;
 import com.emargement.model.Role;
-import com.emargement.model.EtudiantPresence;
+
+// NOUVEL IMPORT : La classe EtudiantPresence est une classe interne du contrôleur
+import com.emargement.controller.DashboardProfesseurController.EtudiantPresence;
+
 import com.emargement.dao.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
@@ -32,7 +35,7 @@ public class EtudiantDAO {
                     etudiant = new Etudiant();
                     etudiant.setId(rs.getInt("etudiantId"));
                     etudiant.setNumeroEtudiant(rs.getString("numeroEtudiant"));
-                    etudiant.setUtilisateurId(utilisateurId);
+                    etudiant.setUtilisateurId(rs.getInt("id"));
 
                     Utilisateur user = new Utilisateur(
                             rs.getInt("id"),
@@ -60,7 +63,7 @@ public class EtudiantDAO {
         String sql = "SELECT e.id AS etudiantId, e.numeroEtudiant, u.id as u_id, u.login, u.nom, u.prenom, u.role, u.motDePasseHashed " +
                 "FROM etudiant e " +
                 "JOIN utilisateur u ON e.utilisateurId = u.id " +
-                "INNER JOIN etudiant_cours ec ON e.id = ec.etudiantId " + // ⭐️ Rétablissement de 'etudiant_cours ec' ⭐️
+                "INNER JOIN etudiant_cours ec ON e.id = ec.etudiantId " +
                 "WHERE ec.coursId = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -99,12 +102,11 @@ public class EtudiantDAO {
     public List<EtudiantPresence> findEtudiantsPresenceForSeance(int seanceId, int coursId) {
         List<EtudiantPresence> etudiantsPresence = new ArrayList<>();
 
-        // ⭐️ Rétablissement de 'etudiant_cours ec' + Logique de présence corrigée (em.id IS NOT NULL) ⭐️
         String sql = "SELECT e.id AS etudiantId, e.numeroEtudiant, u.nom, u.prenom, " +
                 "em.id IS NOT NULL AS estPresent " +
                 "FROM etudiant e " +
                 "JOIN utilisateur u ON e.utilisateurId = u.id " +
-                "INNER JOIN etudiant_cours ec ON e.id = ec.etudiantId " + // ⭐️ CORRIGÉ ICI ⭐️
+                "INNER JOIN etudiant_cours ec ON e.id = ec.etudiantId " +
                 "LEFT JOIN emargement em ON e.id = em.etudiantId AND em.seanceId = ? " +
                 "WHERE ec.coursId = ? " +
                 "ORDER BY u.nom, u.prenom";

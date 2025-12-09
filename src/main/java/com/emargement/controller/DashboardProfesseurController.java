@@ -6,7 +6,6 @@ import com.emargement.dao.SeanceDAO;
 import com.emargement.dao.EtudiantDAO;
 import com.emargement.dao.EmargementDAO;
 import com.emargement.model.Cours;
-import com.emargement.model.EtudiantPresence;
 import com.emargement.model.Utilisateur;
 import com.emargement.model.Seance;
 import com.emargement.service.EmargementService;
@@ -20,7 +19,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.util.Callback;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
+import javafx.beans.property.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -96,6 +95,15 @@ public class DashboardProfesseurController implements Initializable {
 
     private void loadEtudiantsPresence(Seance seance) {
         List<EtudiantPresence> presenceList = etudiantDAO.findEtudiantsPresenceForSeance(seance.getId(), coursSelectionne.getId());
+
+        if (etudiantsData == null) {
+            etudiantsData = FXCollections.observableArrayList();
+            etudiantTableView.setItems(etudiantsData);
+        }
+
+        // FIX : Vider la liste avant de recharger pour éviter les artefacts d'affichage (alternance)
+        etudiantsData.clear();
+
         etudiantsData.setAll(presenceList);
     }
 
@@ -142,7 +150,8 @@ public class DashboardProfesseurController implements Initializable {
         });
     }
 
-    // --- Configuration du Tableau ---
+
+    // --- Configuration du Tableau (Logique de CheckBox Finalisée) ---
     private void setupTableView() {
 
         colNom.setCellValueFactory(new PropertyValueFactory<>("nomComplet"));
@@ -159,36 +168,27 @@ public class DashboardProfesseurController implements Initializable {
                     setGraphic(null);
                 } else {
                     setText(item);
-                    setStyle(item.equals("Présent") ? "-fx-text-fill: #2ecc71;" : "-fx-text-fill: #e74c3c;");
+                    getStyleClass().removeAll("presence-present", "presence-absent");
+                    getStyleClass().add(item.equals("Présent") ? "presence-present" : "presence-absent");
                 }
             }
         });
 
-        // 2. Colonne d'Édition CheckBox (LOGIQUE CORRIGÉE ET SIMPLIFIÉE)
+        // 2. Colonne d'Édition CheckBox
         etudiantTableView.setEditable(true);
         colEditPresence.setEditable(true);
-
         colEditPresence.setCellValueFactory(new PropertyValueFactory<>("estPresent"));
 
-        // Utilisation de la CellFactory standard qui se lie à la PropertyValueFactory
-        colEditPresence.setCellFactory(CheckBoxTableCell.forTableColumn(
-                // Ceci est la meilleure façon d'assurer la liaison CheckBox -> Modèle
-                param -> etudiantTableView.getItems().get(param).estPresentProperty()
-        ));
+        // LOGIQUE CLÉ : Interception du clic, validation DB et mise à jour du modèle
+        Callback<Integer, ObservableValue<Boolean>> dbCommitCallback = (param -> {
 
-        // Intercepter l'événement APRÈS que la CheckBox a mis à jour le modèle
-        colEditPresence.setOnEditCommit(event -> {
-
-            EtudiantPresence etudiant = event.getRowValue();
-            Boolean nouvelEtat = event.getNewValue();
+            final EtudiantPresence etudiant = etudiantTableView.getItems().get(param);
+            // On calcule le nouvel état cible
+            final Boolean nouvelEtat = !etudiant.isEstPresent();
 
             if (seanceSelectionnee == null || seanceSelectionnee.getId() <= 0) {
                 System.err.println("ERREUR CRITIQUE: Veuillez sélectionner une séance valide.");
-
-                // Annuler le changement dans le modèle et rafraîchir la vue
-                etudiant.setEstPresent(!nouvelEtat);
-                etudiantTableView.refresh();
-                return;
+                return etudiant.estPresentProperty();
             }
 
             // APPEL DU DAO (Sauvegarde/Suppression)
@@ -199,20 +199,29 @@ public class DashboardProfesseurController implements Initializable {
             );
 
             if (success) {
-                System.out.println("Présence de " + etudiant.getNomComplet() + " mise à jour: " + (nouvelEtat ? "Présent" : "Absent"));
-                // Le modèle est déjà mis à jour par JavaFX. On rafraîchit la ligne pour la couleur et le texte
+                // Écriture réussie : on met à jour le modèle JavaFX
+                System.out.println("Présence de " + etudiant.getNomComplet() + " mise à jour en DB: " + (nouvelEtat ? "Présent" : "Absent"));
+
+                etudiant.setEstPresent(nouvelEtat);
+                // FIX INVERSION : Assurez-vous que le statut textuel suit l'état de la CheckBox
+                etudiant.setStatutPresence(nouvelEtat ? "Présent" : "Absent");
+
+                // FIX CHECKBOX BLOQUÉE : On remet le refresh.
+                // Les appels de focus (edit(-1, null)) qui bloquaient sont retirés.
                 etudiantTableView.refresh();
 
             } else {
-                // Échec du DAO : on annule la modification pour que la CheckBox revienne en arrière
-                System.err.println("Échec de l'écriture en base de données pour " + etudiant.getNomComplet() + ". Changement annulé.");
+                // Échec du DAO : La CheckBox reviendra à l'état initial.
+                System.err.println("ÉCHEC CRITIQUE: L'écriture en base de données a échoué. Le changement est ignoré.");
 
-                // ⭐️ LA CLÉ : Rétablir la valeur opposée pour annuler l'édition ⭐️
-                etudiant.setEstPresent(!nouvelEtat);
-                etudiantTableView.refresh();
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Échec de l'enregistrement en base de données.", ButtonType.OK);
+                alert.showAndWait();
             }
+
+            return etudiant.estPresentProperty();
         });
 
+        colEditPresence.setCellFactory(CheckBoxTableCell.forTableColumn(dbCommitCallback));
 
         etudiantsData = FXCollections.observableArrayList();
         etudiantTableView.setItems(etudiantsData);
@@ -270,9 +279,9 @@ public class DashboardProfesseurController implements Initializable {
             return;
         }
 
-        // Le bouton sert d'actualisation car les modifications sont instantanées.
+        // Le bouton sert d'actualisation propre de la liste.
         loadEtudiantsPresence(seanceSelectionnee);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Les modifications sont enregistrées en temps réel. Liste actualisée.", ButtonType.OK);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Liste de présence actualisée.", ButtonType.OK);
         alert.showAndWait();
     }
 
@@ -280,5 +289,42 @@ public class DashboardProfesseurController implements Initializable {
     private void handleLogout() throws IOException {
         SessionManager.clearSession();
         App.setRoot("Login");
+    }
+
+
+    /**
+     * CLASSE INTERNE : Modèle de données pour la TableView de présence.
+     */
+    public static class EtudiantPresence {
+        private final IntegerProperty etudiantId;
+        private final StringProperty nomComplet;
+        private final StringProperty numeroEtudiant;
+        private final StringProperty statutPresence;
+        private final BooleanProperty estPresent;
+
+        public EtudiantPresence(int etudiantId, String nomComplet, String numeroEtudiant, boolean present) {
+            this.etudiantId = new SimpleIntegerProperty(etudiantId);
+            this.nomComplet = new SimpleStringProperty(nomComplet);
+            this.numeroEtudiant = new SimpleStringProperty(numeroEtudiant);
+            this.estPresent = new SimpleBooleanProperty(present);
+            this.statutPresence = new SimpleStringProperty(present ? "Présent" : "Absent");
+
+            // FIX INVERSION : L'écouteur de propriété est supprimé. La mise à jour est effectuée
+            // directement dans le contrôleur après la confirmation DB.
+        }
+
+        // --- Getters et Setters ---
+
+        public int getEtudiantId() { return etudiantId.get(); }
+        public String getNomComplet() { return nomComplet.get(); }
+        public String getNumeroEtudiant() { return numeroEtudiant.get(); }
+        public String getStatutPresence() { return statutPresence.get(); }
+
+        public boolean isEstPresent() { return estPresent.get(); }
+
+        public void setEstPresent(boolean present) { this.estPresent.set(present); }
+        public void setStatutPresence(String statut) { this.statutPresence.set(statut); }
+
+        public BooleanProperty estPresentProperty() { return estPresent; }
     }
 }
