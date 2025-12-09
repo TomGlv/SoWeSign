@@ -1,0 +1,256 @@
+/* Fichier: style.css - Design Moderne & Épuré */
+
+/* === PALETTE DE COULEURS ===
+   Primaire: #6366f1 (Indigo vibrant)
+   Secondaire: #8b5cf6 (Violet profond)
+   Accent: #06b6d4 (Cyan électrique)
+   Success: #10b981 (Vert émeraude)
+   Danger: #ef4444 (Rouge moderne)
+   Fond: #0f172a (Slate très foncé)
+   Surface: #1e293b (Slate foncé)
+   Surface élevée: #334155 (Slate moyen)
+*/
+
+/* === BASE === */
+.root {
+    -fx-background-color: linear-gradient(to bottom, #0f172a, #1e293b);
+    -fx-font-family: "Segoe UI", "San Francisco", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* === BARRE SUPÉRIEURE === */
+.hbox-header {
+    -fx-background-color: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    -fx-padding: 16px 24px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 12, 0, 0, 4);
+}
+
+.label-white {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 2, 0, 0, 1);
+}
+
+/* === SIDEBAR LATÉRALE === */
+.vbox-sidebar {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+    -fx-border-width: 0 2px 0 0;
+    -fx-padding: 16px 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 2, 0);
+}
+
+/* === LISTVIEW === */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 4px 8px;
+}
+
+.list-view .viewport {
+    -fx-background-color: transparent;
+}
+
+.list-view .scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.list-view .scroll-bar .thumb {
+    -fx-background-color: #475569;
+    -fx-background-radius: 4px;
+}
+
+.list-view .scroll-bar .thumb:hover {
+    -fx-background-color: #64748b;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cbd5e1;
+    -fx-padding: 12px 16px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.5), 8, 0, 0, 2);
+}
+
+.list-cell:filled:selected:hover {
+    -fx-background-color: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #334155;
+    -fx-text-fill: #f1f5f9;
+}
+
+.list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+/* === BOUTONS MODERNES === */
+.button {
+    -fx-background-color: #475569;
+    -fx-text-fill: #f8fafc;
+    -fx-font-weight: 600;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 4, 0, 0, 2);
+}
+
+.button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 8, 0, 0, 4);
+}
+
+.button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-translate-y: 1px;
+}
+
+/* Boutons spécifiques avec gradients */
+#generate-button {
+    -fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -fx-text-fill: #ffffff;
+}
+
+#generate-button:hover {
+    -fx-background-color: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+#save-button {
+    -fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    -fx-text-fill: #ffffff;
+}
+
+#save-button:hover {
+    -fx-background-color: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+}
+
+#logout-button {
+    -fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    -fx-text-fill: #ffffff;
+}
+
+#logout-button:hover {
+    -fx-background-color: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* === TABLEVIEW === */
+.table-view {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-control-inner-background: #1e293b;
+    -fx-table-cell-border-color: #334155;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #334155 0%, #1e293b 100%);
+    -fx-background-radius: 12px 12px 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 1px 2px 0;
+    -fx-border-color: transparent transparent #475569 transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #94a3b8;
+    -fx-font-weight: 700;
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12px 16px;
+}
+
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell {
+    -fx-background-color: #1e293b;
+    -fx-background-insets: 0;
+    -fx-padding: 8px 0;
+    -fx-border-width: 0 0 1px 0;
+    -fx-border-color: #334155;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #233042;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #2d3f54;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: linear-gradient(90deg, #6366f1 0%, rgba(99, 102, 241, 0.2) 100%);
+    -fx-border-color: #6366f1;
+    -fx-border-width: 0 0 0 3px;
+}
+
+.table-cell {
+    -fx-text-fill: #cbd5e1;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12px 16px;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 500;
+}
+
+/* === PANNEAU DE DÉTAILS === */
+.hbox-details {
+    -fx-background-color: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    -fx-border-color: #475569;
+    -fx-border-width: 2px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 12, 0, 0, 4);
+}
+
+/* === SCROLLBAR PERSONNALISÉE === */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #475569;
+    -fx-background-radius: 6px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #64748b;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* === ANIMATIONS & TRANSITIONS === */
+.button,
+.list-cell,
+.table-row-cell {
+    -fx-transition: all 0.2s ease;
+}
