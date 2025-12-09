@@ -1,0 +1,118 @@
+/* Fichier: style.css */
+
+/* Thème sombre pour un look professionnel */
+.root {
+    -fx-background-color: #34495e; /* Bleu foncé/gris foncé (Midnight Blue) */
+}
+
+/* Style de la barre supérieure */
+.hbox-header {
+    -fx-background-color: #2c3e50; /* Couleur très foncée */
+}
+
+.label-white {
+    -fx-text-fill: #ecf0f1; /* Texte très clair */
+}
+
+/* Style du VBox latéral (liste des cours/séances) */
+.vbox-sidebar {
+    -fx-background-color: #34495e;
+    -fx-border-color: #2c3e50;
+    -fx-border-width: 0 1px 0 0; /* Séparateur vertical */
+}
+
+/* ListView */
+.list-view {
+    -fx-background-color: #465f7c; /* Fond des listes légèrement plus clair */
+    -fx-border-color: #2c3e50;
+    -fx-text-fill: #ecf0f1;
+}
+
+.list-cell {
+    -fx-background-color: #465f7c;
+    -fx-text-fill: #ecf0f1;
+}
+
+.list-cell:filled:selected, .list-cell:filled:selected:hover {
+    -fx-background-color: #1abc9c; /* Turquoise pour la sélection */
+    -fx-text-fill: white;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #5d7591;
+    -fx-text-fill: #ecf0f1;
+}
+
+/* Style des boutons (Flat Design) */
+.button {
+    -fx-background-color: #95a5a6; /* Gris neutre */
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 4px;
+}
+
+.button:hover {
+    -fx-opacity: 0.8;
+}
+
+/* Boutons spécifiques */
+#generate-button {
+    -fx-background-color: #2ecc71; /* Vert Succès */
+    -fx-text-fill: white;
+}
+
+#save-button {
+    -fx-background-color: #3498db; /* Bleu Primaire */
+    -fx-text-fill: white;
+}
+
+#logout-button {
+    -fx-background-color: #e74c3c; /* Rouge Danger */
+    -fx-text-fill: white;
+}
+
+/* TableView */
+.table-view {
+    -fx-background-color: #465f7c;
+    -fx-border-color: #2c3e50;
+    -fx-base: #34495e;
+    -fx-control-inner-background: #465f7c;
+    -fx-table-cell-border-color: #34495e;
+}
+
+.table-row-cell {
+    -fx-background-color: -fx-control-inner-background, #34495e;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 0;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -fx-control-inner-background, #3e566d; /* Ligne plus foncée */
+    -fx-background-insets: 0, 0 0 1 0;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #1abc9c;
+}
+
+.table-column {
+    -fx-alignment: CENTER-LEFT;
+}
+
+.column-header {
+    -fx-background-color: #2c3e50;
+}
+
+.column-header-background .label {
+    -fx-text-fill: #ecf0f1;
+    -fx-font-weight: bold;
+}
+
+/* Panneau de détails (Code, statut) */
+.hbox-details {
+    -fx-background-color: #465f7c;
+    -fx-border-color: #2c3e50;
+    -fx-border-radius: 5px;
+}
