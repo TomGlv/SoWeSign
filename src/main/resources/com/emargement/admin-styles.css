@@ -2,8 +2,8 @@
    GLOBAL STYLES (Thème Bleu Marine/Sombre)
    ================================================================= */
 .admin-dashboard {
-    /* Fond principal sombre, reprenant le bleu marine de l'application */
-    -fx-background-color: #34495e; /* Couleur de secours de votre login ou un gris bleu foncé */
+    /* Fond principal sombre (comme le background de votre login) */
+    -fx-background-color: #34495e;
 }
 
 /* Titre principal */
@@ -15,7 +15,7 @@
 
 /* Message de Bienvenue */
 .welcome-label {
-    -fx-text-fill: #2ecc71; /* Utilisons votre couleur Vert vif pour l'accentuation */
+    -fx-text-fill: #2ecc71; /* Accent Vert vif (cohérent avec le bouton de connexion) */
     -fx-font-size: 18px;
     -fx-font-style: italic;
 }
@@ -26,7 +26,7 @@
 
 /* Conteneur d'action principal */
 .action-box {
-    /* Conteneur semi-transparent ou légèrement plus clair pour se détacher du fond */
+    /* Conteneur légèrement plus clair ou transparent pour se détacher */
     -fx-background-color: rgba(255, 255, 255, 0.1);
     -fx-padding: 30px;
     -fx-background-radius: 10px;
@@ -36,13 +36,13 @@
 
 /* Titre de la section d'action */
 .action-title {
-    -fx-text-fill: white; /* Texte blanc */
+    -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 
 /* Bouton Primaire (Gérer les Utilisateurs) */
 .primary-button {
-    -fx-background-color: #2ecc71; /* Vert vif (comme votre bouton de connexion) */
+    -fx-background-color: #2ecc71; /* Vert vif */
     -fx-text-fill: white;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
@@ -55,7 +55,7 @@
 
 /* Bouton Déconnexion */
 .logout-button {
-    -fx-background-color: #e74c3c; /* Rouge plus sombre (danger) */
+    -fx-background-color: #e74c3c; /* Rouge pour le danger */
     -fx-text-fill: white;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -80,6 +80,6 @@
 }
 
 .activity-text {
-    -fx-text-fill: #bdc3c7; /* Gris clair pour le texte secondaire */
+    -fx-text-fill: #bdc3c7; /* Gris clair */
     -fx-font-style: italic;
 }
