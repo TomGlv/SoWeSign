@@ -1,5 +1,5 @@
 # SoWeSign - Application d'Émargement Électronique
-# ATTENTION UTILISE LA BRANCHE ADMIN C'EST LA DERNIERE UPDATE
+# IMPORTANT IL FAUT UTILISE LA BRANCHE ADMIN C'EST LA DERNIERE UPDATE
 
 ##  Description du Projet
 
