@@ -12,11 +12,8 @@ public class Seance {
     private String codeEmargement;
     private LocalDateTime codeEmargementExpire;
 
-    // Constructeur par défaut
     public Seance() {
     }
-
-    // Constructeur complet (optionnel, mais pratique)
     public Seance(int id, int coursId, LocalDateTime dateDebut, LocalDateTime dateFin, String salle, String codeEmargement, LocalDateTime codeEmargementExpire) {
         this.id = id;
         this.coursId = coursId;
@@ -26,9 +23,6 @@ public class Seance {
         this.codeEmargement = codeEmargement;
         this.codeEmargementExpire = codeEmargementExpire;
     }
-
-    // --- Getters and Setters ---
-
     public int getId() {
         return id;
     }
@@ -86,8 +80,6 @@ public class Seance {
     public void setCodeEmargementExpire(LocalDateTime codeEmargementExpire) {
         this.codeEmargementExpire = codeEmargementExpire;
     }
-
-    // --- Override méthodes pour la comparaison (si nécessaire) ---
 
     @Override
     public boolean equals(Object o) {

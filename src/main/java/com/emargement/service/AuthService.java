@@ -1,5 +1,3 @@
-// Fichier : src/main/java/com/emargement/service/AuthService.java (Version Sécurisée)
-
 package com.emargement.service;
 
 import com.emargement.dao.UtilisateurDAO;
@@ -11,8 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 public class AuthService {
-
-    // Instanciation de l'encodeur BCrypt
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
 

@@ -16,14 +16,11 @@ import java.sql.SQLException;
 public class EmargementService {
 
     private final SeanceDAO seanceDAO = new SeanceDAO();
-    private final EtudiantDAO etudiantDAO = new EtudiantDAO(); // Maintenu pour la logique Etudiant
+    private final EtudiantDAO etudiantDAO = new EtudiantDAO();
     private final EmargementDAO emargementDAO = new EmargementDAO();
 
     public static final long VALIDITE_MINUTES = 10;
 
-    /**
-     * Génère un code d'émargement unique et l'enregistre pour la séance spécifiée.
-     */
     public Optional<String> generateUniqueCode(int seanceId) {
         SecureRandom random = new SecureRandom();
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -34,11 +31,9 @@ public class EmargementService {
         }
 
         String finalCode = code.toString();
-        // L'heure d'expiration est l'heure courante plus la validité
         LocalDateTime expiration = LocalDateTime.now().plusMinutes(VALIDITE_MINUTES);
 
         try {
-            // Mise à jour de la séance dans la base de données
             seanceDAO.updateCodeEmargement(seanceId, finalCode, expiration);
             return Optional.of(finalCode);
         } catch (SQLException e) {
@@ -47,20 +42,8 @@ public class EmargementService {
         }
     }
 
-    /**
-     * Tente d'émarger un étudiant avec un code unique.
-     * ⭐️ CORRECTION CRITIQUE : Signature ajustée pour correspondre au contrôleur Étudiant.
-     * Le code du contrôleur Étudiant appelait (Etudiant, String), mais la logique interne
-     * de ce service semble nécessiter le code d'abord ou l'utilisateur.
-     * * Pour minimiser les changements, nous allons adapter la logique pour accepter
-     * (Etudiant etudiant, String code), car c'est ce que le contrôleur envoie.
-     * @param etudiant L'objet Etudiant (déjà récupéré par le contrôleur depuis la session).
-     * @param code Le code d'émargement saisi.
-     * @return Un message de succès/échec (String) plutôt qu'un boolean (pour l'affichage UI).
-     */
     public String emarger(Etudiant etudiant, String code) {
 
-        // 1. Recherche de la séance active par le code
         Optional<Seance> seanceOpt = seanceDAO.findByCodeEmargement(code);
 
         if (seanceOpt.isEmpty()) {
@@ -71,23 +54,20 @@ public class EmargementService {
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime expirationTime = seance.getCodeEmargementExpire();
 
-        // 2. Vérification de l'expiration du code
         if (expirationTime == null || expirationTime.isBefore(currentTime)) {
             System.err.println("Échec émargement : Code expiré. Code: " + code + ", Heure Actuelle (Java): " + currentTime + ", Heure Expiration (DB): " + expirationTime);
             return "Échec émargement pour " + etudiant.getUtilisateur().getLogin() + " : Code expiré.";
         }
 
-        // 3. Vérification si l'étudiant a déjà émargé (anti-doublon)
         if (emargementDAO.hasAttended(seance.getId(), etudiant.getId())) {
             System.out.println("Échec émargement pour " + etudiant.getUtilisateur().getLogin() + " : Déjà émargé.");
             return "Échec émargement pour " + etudiant.getUtilisateur().getLogin() + " : Déjà émargé.";
         }
 
-        // 4. Enregistrer l'émargement
         Emargement emargement = new Emargement();
         emargement.setSeanceId(seance.getId());
         emargement.setEtudiantId(etudiant.getId());
-        emargement.setDateHeureEmargement(currentTime); // Utiliser l'heure actuelle pour l'enregistrement
+        emargement.setDateHeureEmargement(currentTime);
 
         boolean success = emargementDAO.save(emargement);
 

@@ -7,10 +7,8 @@ public class Emargement {
     private int id;
     private int etudiantId;
     private int seanceId;
-    // ⭐️ AJOUT CRITIQUE : Le champ manquant
     private LocalDateTime dateHeureEmargement;
 
-    // Constructeurs (laissez-les tels quels)
 
     // Getters
     public int getId() { return id; }
@@ -22,8 +20,6 @@ public class Emargement {
     public void setId(int id) { this.id = id; }
     public void setEtudiantId(int etudiantId) { this.etudiantId = etudiantId; }
     public void setSeanceId(int seanceId) { this.seanceId = seanceId; }
-
-    // ⭐️ AJOUT CRITIQUE : Le setter manquant
     public void setDateHeureEmargement(LocalDateTime dateHeureEmargement) {
         this.dateHeureEmargement = dateHeureEmargement;
     }

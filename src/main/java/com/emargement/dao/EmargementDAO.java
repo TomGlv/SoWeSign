@@ -11,9 +11,6 @@ import java.time.LocalDateTime;
 
 public class EmargementDAO {
 
-    /**
-     * Enregistre un émargement (utilisé par l'étudiant via code).
-     */
     public boolean save(Emargement emargement) {
         String sql = "INSERT INTO emargement (seanceId, etudiantId, present, heureEmargement) VALUES (?, ?, 1, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -35,9 +32,6 @@ public class EmargementDAO {
         }
     }
 
-    /**
-     * Vérifie si un étudiant a déjà émargé pour une séance donnée.
-     */
     public boolean hasAttended(int seanceId, int etudiantId) {
         String sql = "SELECT COUNT(*) FROM emargement WHERE seanceId = ? AND etudiantId = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -56,10 +50,6 @@ public class EmargementDAO {
         }
     }
 
-    /**
-     * Met à jour ou insère l'enregistrement de présence manuellement (transactionnel).
-     * ⭐️ LOGIQUE CORRIGÉE : Utilise DELETE puis INSERT. ⭐️
-     */
     public boolean saveOrDeleteAttendance(int seanceId, int etudiantId, boolean estPresent) {
         String deleteSql = "DELETE FROM emargement WHERE seanceId = ? AND etudiantId = ?";
         String insertSql = "INSERT INTO emargement (seanceId, etudiantId, present, heureEmargement) VALUES (?, ?, 1, ?)";
@@ -67,17 +57,15 @@ public class EmargementDAO {
 
         try {
             conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false); // Début de la transaction
+            conn.setAutoCommit(false);
 
-            // 1. Suppression de toute ligne existante (nettoyage)
             try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
                 deleteStmt.setInt(1, seanceId);
                 deleteStmt.setInt(2, etudiantId);
-                deleteStmt.executeUpdate(); // Exécute le DELETE (0 ou 1 ligne supprimée)
+                deleteStmt.executeUpdate();
             }
 
             if (estPresent) {
-                // 2. Si on veut PRÉSENT, on insère la nouvelle ligne
                 try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                     insertStmt.setInt(1, seanceId);
                     insertStmt.setInt(2, etudiantId);
@@ -85,16 +73,15 @@ public class EmargementDAO {
                     insertStmt.executeUpdate();
                 }
             }
-            // Si estPresent est FALSE, seule la suppression a eu lieu (Absence = Absence de ligne)
 
-            conn.commit(); // Validation
+            conn.commit();
             return true;
 
         } catch (SQLException e) {
             System.err.println("ERREUR SQL CRITIQUE - EmargementDAO.saveOrDeleteAttendance : " + e.getMessage());
             try {
                 if (conn != null) {
-                    conn.rollback(); // Annulation en cas d'erreur
+                    conn.rollback();
                 }
             } catch (SQLException ex) {
                 System.err.println("Erreur lors du rollback: " + ex.getMessage());
@@ -104,7 +91,7 @@ public class EmargementDAO {
             try {
                 if (conn != null) {
                     conn.setAutoCommit(true);
-                    conn.close(); // Fermeture
+                    conn.close();
                 }
             } catch (SQLException e) {
                 System.err.println("Erreur lors de la fermeture de la connexion: " + e.getMessage());

@@ -8,7 +8,6 @@ public class Etudiant {
 
     public Etudiant() {}
 
-    // Constructeur complet (utilisé dans les DAOs)
     public Etudiant(int id, String numeroEtudiant, int utilisateurId) {
         this.id = id;
         this.numeroEtudiant = numeroEtudiant;
@@ -20,8 +19,6 @@ public class Etudiant {
     public String getNumeroEtudiant() { return numeroEtudiant; }
     public int getUtilisateurId() { return utilisateurId; }
     public Utilisateur getUtilisateur() { return utilisateur; }
-
-    // ⭐️ Méthodes pour TableView (utiles pour le DashboardProfesseur)
     public String getNomComplet() { return utilisateur != null ? utilisateur.getPrenom() + " " + utilisateur.getNom() : ""; }
     public String getLogin() { return utilisateur != null ? utilisateur.getLogin() : ""; }
 

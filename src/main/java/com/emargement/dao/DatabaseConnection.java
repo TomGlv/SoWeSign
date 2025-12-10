@@ -1,5 +1,3 @@
-// Fichier : src/main/java/com/emargement/dao/DatabaseConnection.java
-
 package com.emargement.dao;
 
 import java.sql.Connection;
