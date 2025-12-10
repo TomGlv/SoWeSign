@@ -24,7 +24,7 @@ public class LoginController {
     private PasswordField passwordField;
 
     @FXML
-    private Label messageLabel; // ⭐️ Ceci était null lors du crash
+    private Label messageLabel;
 
     private final AuthService authService = new AuthService();
     private final EtudiantDAO etudiantDAO = new EtudiantDAO();
@@ -66,7 +66,7 @@ public class LoginController {
                         App.setRoot("DashboardAdmin");
                         break;
                     case PROFESSEUR:
-                        App.setRoot("DashboardProfesseur"); // ⭐️ Ligne où l'erreur FXML est levée
+                        App.setRoot("DashboardProfesseur");
                         break;
                     case ETUDIANT:
                         App.setRoot("DashboardEtudiant");
@@ -76,11 +76,9 @@ public class LoginController {
                         messageLabel.setStyle("-fx-text-fill: red;");
                 }
             } catch (IOException e) {
-                // ⭐️ CORRECTION CRITIQUE : Capture l'erreur de chargement FXML
                 System.err.println("Erreur de chargement du dashboard pour le rôle " + user.getRole());
                 e.printStackTrace();
 
-                // Afficher le message d'erreur SANS faire planter JavaFX (car messageLabel n'est pas null ici)
                 if (messageLabel != null) {
                     messageLabel.setText("Erreur interne : Impossible de charger la vue du Tableau de Bord (Erreur FXML).");
                     messageLabel.setStyle("-fx-text-fill: red;");
@@ -88,7 +86,6 @@ public class LoginController {
             }
 
         } else {
-            // Afficher le message d'erreur si la connexion échoue
             if (messageLabel != null) {
                 messageLabel.setText("Login ou mot de passe incorrect.");
                 messageLabel.setStyle("-fx-text-fill: red;");

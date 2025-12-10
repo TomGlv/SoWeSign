@@ -51,8 +51,6 @@ public class EtudiantPresence {
 
     public boolean isEstPresent() { return estPresent.get(); }
     public void setEstPresent(boolean estPresent) { this.estPresent.set(estPresent); }
-
-    // --- Property Getters (utilisés par TableView) ---
     public StringProperty nomCompletProperty() { return nomComplet; }
     public StringProperty numeroEtudiantProperty() { return numeroEtudiant; }
     public StringProperty statutPresenceProperty() { return statutPresence; }

@@ -2,10 +2,6 @@ package com.emargement.session;
 
 import com.emargement.model.Utilisateur;
 
-/**
- * Singleton pour gérer la session utilisateur actuelle.
- * ⭐️ Remplacera le SessionManager statique pour une approche plus "clean" (mais les deux sont fonctionnels).
- */
 public class UserSession {
 
     private static UserSession instance;

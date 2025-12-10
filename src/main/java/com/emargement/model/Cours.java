@@ -30,11 +30,6 @@ public class Cours {
     public void setCode(String code) { this.code = code; }
     public void setDescription(String description) { this.description = description; }
     public void setProfesseurId(int professeurId) { this.professeurId = professeurId; }
-
-    /**
-     * ⭐️ CORRECTION : Redéfinit toString() pour un affichage lisible dans la ListView.
-     * Ex: "Java Avancé (JAV-A)"
-     */
     @Override
     public String toString() {
         return nomCours + " (" + code + ")";

@@ -1,0 +1,85 @@
+/* =================================================================
+   GLOBAL STYLES (Thème Bleu Marine/Sombre)
+   ================================================================= */
+.admin-dashboard {
+    /* Fond principal sombre (comme le background de votre login) */
+    -fx-background-color: #34495e;
+}
+
+/* Titre principal */
+.title-label {
+    -fx-text-fill: white; /* Texte blanc sur fond sombre */
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0 0 0;
+}
+
+/* Message de Bienvenue */
+.welcome-label {
+    -fx-text-fill: #2ecc71; /* Accent Vert vif (cohérent avec le bouton de connexion) */
+    -fx-font-size: 18px;
+    -fx-font-style: italic;
+}
+
+/* =================================================================
+   BOUTONS ET ACTIONS
+   ================================================================= */
+
+/* Conteneur d'action principal */
+.action-box {
+    /* Conteneur légèrement plus clair ou transparent pour se détacher */
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-padding: 30px;
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 10px;
+}
+
+/* Titre de la section d'action */
+.action-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Bouton Primaire (Gérer les Utilisateurs) */
+.primary-button {
+    -fx-background-color: #2ecc71; /* Vert vif */
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+.primary-button:hover {
+    -fx-background-color: #27ae60;
+}
+
+/* Bouton Déconnexion */
+.logout-button {
+    -fx-background-color: #e74c3c; /* Rouge pour le danger */
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+.logout-button:hover {
+    -fx-background-color: #c0392b;
+}
+
+/* =================================================================
+   JOURNAL D'ACTIVITÉ
+   ================================================================= */
+
+.activity-box {
+    -fx-padding: 10px 0;
+}
+
+.activity-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.activity-text {
+    -fx-text-fill: #bdc3c7; /* Gris clair */
+    -fx-font-style: italic;
+}

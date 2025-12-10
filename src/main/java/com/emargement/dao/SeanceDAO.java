@@ -10,22 +10,13 @@ import java.time.LocalDateTime;
 
 public class SeanceDAO {
 
-    /**
-     * Helper pour obtenir l'heure de début/fin en tant que Timestamp concaténé.
-     * La DB stocke date et heure séparément (dateSeance, heureDebut/Fin).
-     * Nous devons les CONCATENER en SQL pour les lire en tant que LocalDateTime en Java.
-     */
     private static final String SEANCE_FIELDS =
             "id, coursId, salle, codeEmargement, codeEmargementExpire, " +
                     "CONCAT(dateSeance, ' ', heureDebut) AS dateHeureDebut, " +
                     "CONCAT(dateSeance, ' ', heureFin) AS dateHeureFin ";
 
-    /**
-     * Récupère toutes les séances associées à un cours spécifique.
-     */
     public List<Seance> findByCoursId(int coursId) {
         List<Seance> seances = new ArrayList<>();
-        // Utilisation de l'alias de concaténation pour les dates/heures
         String sql = "SELECT " + SEANCE_FIELDS +
                 "FROM seance WHERE coursId = ? ORDER BY dateSeance, heureDebut ASC";
 
@@ -40,12 +31,10 @@ public class SeanceDAO {
                     seance.setId(rs.getInt("id"));
                     seance.setCoursId(rs.getInt("coursId"));
 
-                    // Lecture des alias concaténés
                     seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
                     seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
 
                     seance.setSalle(rs.getString("salle"));
-                    // Lecture des noms de colonnes réels
                     seance.setCodeEmargement(rs.getString("codeEmargement"));
 
                     Timestamp tsExpire = rs.getTimestamp("codeEmargementExpire");
@@ -56,15 +45,11 @@ public class SeanceDAO {
                 }
             }
         } catch (SQLException e) {
-            // L'erreur ne devrait plus apparaître ici
             System.err.println("Erreur SQL dans SeanceDAO.findByCoursId : " + e.getMessage());
         }
         return seances;
     }
 
-    /**
-     * Récupère une séance par son identifiant unique. (Pour handleActualiser)
-     */
     public Optional<Seance> findById(int seanceId) {
         String sql = "SELECT " + SEANCE_FIELDS + "FROM seance WHERE id = ?";
 
@@ -79,7 +64,6 @@ public class SeanceDAO {
                     seance.setId(rs.getInt("id"));
                     seance.setCoursId(rs.getInt("coursId"));
 
-                    // Lecture des alias concaténés
                     seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
                     seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
 
@@ -100,9 +84,6 @@ public class SeanceDAO {
         return Optional.empty();
     }
 
-    /**
-     * Met à jour le code d'émargement et son temps d'expiration pour une séance.
-     */
     public void updateCodeEmargement(int seanceId, String code, LocalDateTime expiration) throws SQLException {
         String sql = "UPDATE seance SET codeEmargement = ?, codeEmargementExpire = ? WHERE id = ?";
 
@@ -117,9 +98,6 @@ public class SeanceDAO {
         }
     }
 
-    /**
-     * Récupère une séance en utilisant son code d'émargement unique.
-     */
     public Optional<Seance> findByCodeEmargement(String code) {
         String sql = "SELECT " + SEANCE_FIELDS + "FROM seance WHERE codeEmargement = ?";
 
@@ -134,7 +112,6 @@ public class SeanceDAO {
                     seance.setId(rs.getInt("id"));
                     seance.setCoursId(rs.getInt("coursId"));
 
-                    // Lecture des alias concaténés
                     seance.setDateDebut(rs.getTimestamp("dateHeureDebut").toLocalDateTime());
                     seance.setDateFin(rs.getTimestamp("dateHeureFin").toLocalDateTime());
 

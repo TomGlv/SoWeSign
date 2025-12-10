@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.emargement.controller.AddUserController"
+      spacing="15" style="-fx-padding: 20; -fx-background-color: white;">
+
+    <Label text="Ajouter un Utilisateur" style="-fx-font-size: 22px; -fx-font-weight: bold;" />
+
+    <TextField fx:id="loginField" promptText="Email / Identifiant" />
+    <PasswordField fx:id="passwordField" promptText="Mot de passe" />
+    <TextField fx:id="nomField" promptText="Nom" />
+    <TextField fx:id="prenomField" promptText="Prénom" />
+
+    <ComboBox fx:id="roleCombo" promptText="Rôle" />
+
+    <Button text="Enregistrer" onAction="#handleSave"
+            style="-fx-background-color: #27AE60; -fx-text-fill: white;" />
+
+</VBox>
