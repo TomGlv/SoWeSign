@@ -1,6 +1,7 @@
 # SoWeSign - Application d'Émargement Électronique
+###ATTENTION UTILISE LA BRANCHE ADMIN C'EST LA DERNIERE UPDATE
 
-## 🎓 Description du Projet
+##  Description du Projet
 
 **SoWeSign** est une application de gestion d'émargement développée en **JavaFX** (pour l'interface graphique de bureau) et utilisant **MySQL** pour la persistance des données.
 
@@ -8,7 +9,7 @@ L'objectif principal du système est de permettre aux professeurs de générer d
 
 ---
 
-## 💻 Technologies Utilisées
+##  Technologies Utilisées
 
 * **Langage :** Java 21
 * **Interface Graphique :** JavaFX 21
@@ -18,7 +19,7 @@ L'objectif principal du système est de permettre aux professeurs de générer d
 
 ---
 
-## 🚀 Démarrage du Projet
+##  Démarrage du Projet
 
 ### Prérequis
 
