@@ -1,5 +1,6 @@
 # SoWeSign - Application d'Émargement Électronique
 # IMPORTANT IL FAUT UTILISE LA BRANCHE ADMIN C'EST LA DERNIERE UPDATE
+# AUSSI LES MDP DE LA DB SONT TOUS PASSWORD
 
 ##  Description du Projet
 
